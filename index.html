@@ -4,166 +4,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edu-Navigator | 교육과정 재구성 지원 시스템</title>
-    <meta name="description" content="국가 교육과정과 교과서 데이터를 동기화하여 교사의 재구성 설계를 돕는 시스템">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
-        rel="stylesheet">
-    <!-- pdf.js for PDF Processing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <!-- mermaid.js for Visualization -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: true });
-    </script>
+    <title>Edu-Navigator | AI 교육과정 코파일럿</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS (Excel Support) -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
+            --bg-dark: #0f172a;
             --primary: #6366f1;
             --primary-light: #818cf8;
-            --secondary: #ec4899;
-            --accent: #06b6d4;
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-            --text: #f8fafc;
-            --text-dim: #94a3b8;
+            --secondary: #1e293b;
+            --accent: #f472b6;
             --success: #10b981;
             --warning: #f59e0b;
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-blur: blur(12px);
-            --sidebar-width: 280px;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --glass: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(148, 163, 184, 0.1);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+            font-family: 'Pretendard', sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background-color: var(--bg);
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(244, 114, 182, 0.15) 0%, transparent 40%);
             color: var(--text);
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            background-image:
-                radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Sidebar Styles */
-        aside {
-            width: var(--sidebar-width);
-            background: var(--glass);
-            backdrop-filter: var(--glass-blur);
-            border-right: 1px solid var(--border);
-            height: 100%;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
+        /* Layout */
+        header {
+            padding: 1.5rem 2rem;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
             z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 3rem;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .logo h2 {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(to right, #fff, #94a3b8);
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
             -webkit-background-clip: text;
-            background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-
-        nav {
-            flex: 1;
-        }
-
-        .nav-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            border-radius: 12px;
-            color: var(--text-dim);
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            border: 1px solid transparent;
+            gap: 0.5rem;
         }
 
-        .nav-item:hover {
-            color: var(--text);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-item.active {
-            color: var(--text);
-            background: linear-gradient(to right, rgba(99, 102, 241, 0.2), transparent);
-            border-left: 3px solid var(--primary);
-            border-color: rgba(99, 102, 241, 0.1);
-        }
-
-        .nav-item svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Main Content Area */
         main {
-            flex: 1;
-            padding: 2.5rem;
-            overflow-y: auto;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Steps Indicator */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            margin-bottom: 3rem;
             position: relative;
         }
 
-        .header-section {
-            margin-bottom: 2.5rem;
-        }
-
-        .header-section h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(to right, #fff, var(--primary-light));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header-section p {
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
             color: var(--text-dim);
-            font-size: 1.1rem;
+            transition: 0.3s;
         }
 
-        /* Layer Containers */
-        .layer-container {
+        .step.active {
+            color: var(--primary-light);
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .step.active .step-num {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Layer Styles */
+        .layer {
             display: none;
-            animation: fadeIn 0.5s ease-out;
+            animation: fadeIn 0.5s ease;
         }
 
-        .layer-container.active {
+        .layer.active {
             display: block;
         }
 
@@ -179,1407 +137,1125 @@
             }
         }
 
-        /* Card Styles */
+        /* Glass Card */
         .card {
-            background: var(--card-bg);
-            backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(99, 102, 241, 0.3);
-        }
-
-        /* Layer 1: Data Ingestion Specifics */
-        .drop-zone {
-            border: 2px dashed var(--border);
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 4rem 2rem;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        /* Layer 1: Prompt Canvas */
+        .prompt-container {
             text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.02);
+            max-width: 800px;
+            margin: 0 auto;
         }
 
-        .drop-zone:hover,
-        .drop-zone.dragover {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.05);
-        }
-
-        .drop-zone svg {
-            width: 64px;
-            height: 64px;
-            color: var(--primary);
+        .instruction-input {
+            width: 100%;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            color: white;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            resize: none;
             margin-bottom: 1.5rem;
+            transition: 0.3s;
+        }
+
+        .instruction-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .subject-filters {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .subject-chip {
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .subject-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1rem;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
         .btn-primary:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
         }
 
-        /* Progress Animation */
-        .processing-bar {
-            height: 6px;
-            background: var(--border);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        /* Tree Filter UI */
-        .tree-container {
-            width: 250px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            padding: 15px;
-            max-height: 500px;
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-
-        .tree-grade summary {
-            font-weight: 700;
-            color: var(--primary-light);
-            cursor: pointer;
-            padding: 8px 5px;
-            border-radius: 6px;
-            margin-bottom: 2px;
-            transition: background 0.2s;
-        }
-
-        .tree-grade summary:hover {
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .tree-subject-item {
-            padding: 6px 10px 6px 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            color: var(--text);
-            border-radius: 6px;
-            transition: all 0.2s;
-            margin-bottom: 2px;
-        }
-
-        .tree-subject-item:hover,
-        .tree-subject-item.active {
-            background: rgba(236, 72, 153, 0.15);
-            color: var(--secondary);
-            font-weight: 600;
-        }
-
-        .processing-bar-inner {
-            height: 100%;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* Status Tags */
-        .tag {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .tag-success {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--success);
-        }
-
-        .tag-info {
-            background: rgba(6, 182, 212, 0.2);
-            color: var(--accent);
-        }
-
-        /* Grid Layout for Mapping */
-        .mapping-grid {
+        /* Layer 2: Curation Board */
+        .curation-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 2rem;
         }
 
-        .curriculum-list,
-        .textbook-list {
-            max-height: 500px;
+        .curation-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .standard-list {
+            height: 500px;
             overflow-y: auto;
-            padding-right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            padding-right: 0.5rem;
         }
 
-        .item-card {
+        .standard-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .standard-list::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
+        .standard-item {
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            padding: 1rem;
+            border: 1px solid var(--glass-border);
             border-radius: 12px;
-            margin-bottom: 1rem;
+            padding: 1rem;
+            transition: 0.2s;
             cursor: pointer;
-            transition: all 0.2s ease;
+            position: relative;
         }
 
-        .item-card:hover {
-            background: rgba(255, 255, 255, 0.07);
+        .standard-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
-        .item-card.selected {
+        .standard-item.selected {
             border-color: var(--primary);
             background: rgba(99, 102, 241, 0.1);
         }
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
+        .standard-item .code {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 0.3rem;
+            display: block;
         }
 
-        ::-webkit-scrollbar-track {
+        .standard-item .desc {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--text);
+        }
+
+        /* Deficiency Alert */
+        .deficiency-alert {
+            margin-top: 2rem;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--warning);
+            font-size: 0.9rem;
+        }
+
+        /* Layer 3: Flow Board */
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .flow-card {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .flow-num {
+            min-width: 60px;
+            height: 60px;
+            background: var(--secondary);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .flow-num .n {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .flow-num .t {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+
+        .flow-content {
+            flex: 1;
+            background: var(--glass);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flow-info h4 {
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .flow-info p {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .flow-tags {
+            margin-top: 0.8rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-retry {
             background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-dim);
+            padding: 0.6rem;
+            border-radius: 8px;
+            transition: 0.2s;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 10px;
+        .btn-retry:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        /* Loader */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
         }
     </style>
 </head>
 
-<body>
-    <aside>
-        <div class="logo">
-            <div class="logo-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    style="color: white; width: 24px;">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-            </div>
-            <h2>Edu-Navigator</h2>
+<main>
+    <!-- Steps Indicator -->
+    <div class="steps">
+        <div class="step active" id="step-1">
+            <div class="step-num">1</div>
+            <span style="font-size: 0.8rem; font-weight: 600;">아이디어 입력</span>
         </div>
-        <nav>
-            <div class="nav-item active" onclick="switchLayer(1)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path
-                        d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z">
-                    </path>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                    <line x1="12" y1="22.08" x2="12" y2="12"></line></nav-item>
-                    <span>학기 초 세팅 (Data)</span>
-            </div>
-            <div class="nav-item" onclick="switchLayer(2)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-                <span>재구성 설계 (Wizard)</span>
-            </div>
-            <div class="nav-item" onclick="switchLayer(3)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-                <span>결과물 생성 (Output)</span>
-            </div>
-        </nav>
-        <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
-            <p style="font-size: 0.8rem; color: var(--text-dim);">2022 개정 교육과정 호환</p>
+        <div class="step" id="step-2">
+            <div class="step-num">2</div>
+            <span style="font-size: 0.8rem; font-weight: 600;">평가 계획 설계</span>
         </div>
-    </aside>
+        <div class="step" id="step-3">
+            <div class="step-num">3</div>
+            <span style="font-size: 0.8rem; font-weight: 600;">수업 흐름 추천</span>
+        </div>
+        <div class="step" id="step-4">
+            <div class="step-num">4</div>
+            <span style="font-size: 0.8rem; font-weight: 600;">성취기준 매핑</span>
+        </div>
+    </div>
 
-    <main>
-        <!-- Layer 1: Data Ingestion -->
-        <div id="layer1" class="layer-container active">
-            <div class="header-section">
-                <h1>데이터 동기화 (나침반 & 지도)</h1>
-                <p>2022 개정 교육과정 성취기준과 교과서 데이터를 준비합니다.</p>
+    <!-- Layer 1: Prompt Canvas -->
+    <div id="layer-1" class="layer active">
+        <div class="prompt-container">
+            <h2 style="margin-bottom: 1.5rem; font-weight: 700;">어떤 프로젝트를 구상 중이신가요?</h2>
+            <div class="card">
+                <textarea id="prompt-input" class="instruction-input"
+                    placeholder="예: '환경 보호와 기후 위기'를 주제로 3학년 국어 및 사회 교과를 융합한 10차시 프로젝트를 설계해줘."></textarea>
+
+                <div
+                    style="text-align: left; margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed var(--glass-border);">
+                    <span
+                        style="font-size: 0.85rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 1rem;">
+                        <i data-lucide="database" style="width: 14px; vertical-align: middle;"></i> 성취기준 데이터 로드 (CSV,
+                        Excel)
+                    </span>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="file" id="curriculum-file" accept=".csv, .xlsx, .xls" style="display: none;"
+                            onchange="handleFileUpload(this)">
+                        <button class="btn"
+                            style="padding: 0.5rem 1rem; font-size: 0.85rem; background: var(--secondary);"
+                            onclick="document.getElementById('curriculum-file').click()">
+                            <i data-lucide="upload"></i> 파일 선택
+                        </button>
+                        <span id="file-status" style="font-size: 0.85rem; color: var(--text-dim);">대기 중...</span>
+                    </div>
+                    <div id="data-preview"
+                        style="margin-top: 1rem; display: none; font-size: 0.75rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                        <p style="margin: 0 0 0.5rem 0; color: var(--primary-light); font-weight: 600;">데이터 로드 결과 미리보기
+                            (상위 3개)</p>
+                        <div id="preview-list"></div>
+                    </div>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 1rem;">
+                    <span
+                        style="font-size: 0.85rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 0.8rem;">연계
+                        교과 선택</span>
+                    <div class="subject-filters" id="subject-filters">
+                        <div class="subject-chip active" data-subject="국어">국어</div>
+                        <div class="subject-chip active" data-subject="사회">사회</div>
+                        <div class="subject-chip" data-subject="과학">과학</div>
+                        <div class="subject-chip" data-subject="도덕">도덕</div>
+                        <div class="subject-chip" data-subject="미술">미술</div>
+                        <div class="subject-chip" data-subject="음악">음악</div>
+                        <div class="subject-chip" data-subject="체육">체육</div>
+                    </div>
+                </div>
+
+                <button id="start-btn" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; height: 60px;" onclick="goToAssessment()">
+                    <i data-lucide="sparkles"></i> 2단계: 평가 계획 설계하기
+                </button>
+                <p id="prompt-error"
+                    style="color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; display: none;">아이디어를 먼저 입력해
+                    주세요.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layer 2: Assessment Planner (백워드 설계의 핵심) -->
+    <div id="layer-2" class="layer">
+        <div style="max-width: 860px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-weight: 700; margin-bottom: 0.5rem;">📋 평가 계획 설계</h2>
+                <p style="color: var(--text-dim); font-size: 0.95rem;">백워드 디자인의 핵심 — 먼저 '어떻게 증명할 것인가'를 설계합니다.</p>
             </div>
 
+            <!-- Task Type Selection (Standards-Based) -->
             <div class="card" style="margin-bottom: 1.5rem;">
-                <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                    <span class="tag tag-info">나침반</span> <span id="db-status-title">2022 개정 교육과정 DB 상태</span>
-                </h3>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <p style="font-weight: 600; margin-bottom: 4px;" id="db-status-subtitle">사용자 정의 DB 업로드 대기중
-                        </p>
-                        <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 1.5rem;"
-                            id="db-status-desc">현재 등록된 교육과정 성취기준 데이터가 없습니다. 먼저 아래 버튼을 클릭하여 교육과정(PDF/TXT/CSV/JSON) 파일을
-                            업로드해 주세요.</p>
-
-                        <label
-                            style="cursor: pointer; background: rgba(99, 102, 241, 0.1); color: var(--primary-light); padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; border: 1px solid rgba(99, 102, 241, 0.3); display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;"
-                            onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'"
-                            onmouseout="this.style.background='rgba(99, 102, 241, 0.1)'">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" style="margin-right: 8px;">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            <span>사전 세팅: 교육과정 DB 업로드 (.csv, .json, .txt, .pdf)</span>
-                            <input type="file" id="curriculum-upload"
-                                accept=".csv, .json, .txt, .pdf, application/pdf, text/plain" style="display: none;"
-                                onchange="handleCurriculumUpload(event)">
-                        </label>
-                    </div>
-                    <span class="tag tag-warning" id="db-active-tag"
-                        style="margin-top: 5px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">DB
-                        없음 (대기중)</span>
+                <div
+                    style="font-weight: 700; font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="target" style="color: var(--accent);"></i> 수행과제 유형 선택
+                    <span style="font-size: 0.75rem; color: var(--text-dim); font-weight: 400;">(업로드된 성취기준에서 자동
+                        추출)</span>
+                </div>
+                <div id="task-type-chips" class="subject-filters"
+                    style="justify-content: flex-start; margin-bottom: 0;">
+                    <!-- JS Inject -->
                 </div>
             </div>
 
-            <div class="card">
-                <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                    <span class="tag tag-info">지도</span> 교과서 PDF 다중 분석 (Multi-file Processing)
-                </h3>
-                <div id="drop-zone" class="drop-zone">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <p style="font-weight: 600; font-size: 1.2rem; margin-bottom: 8px;">여러 권의 PDF 파일을 한 번에 업로드하세요</p>
-                    <p style="color: var(--text-dim); margin-bottom: 2rem;">각 파일의 텍스트가 병렬로 분석되어 통합 데이터를 생성합니다.</p>
-                    <input type="file" id="file-input" accept="application/pdf" multiple style="display: none;"
-                        onchange="handleFileSelect(event)">
-                    <div
-                        style="display: flex; gap: 10px; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap;">
-                        <button class="btn-primary" onclick="document.getElementById('file-input').click()">파일들
-                            선택하기</button>
-                        <button id="ai-mode-btn" class="btn-primary"
-                            style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none;"
-                            onclick="toggleAIMode()">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" style="margin-right: 8px;">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
-                            Gemini AI 분석 설정
+            <!-- Task Description -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div
+                    style="font-weight: 700; font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="file-text" style="color: var(--primary-light);"></i> 최종 수행과제 (What will students DO
+                    to demonstrate?)
+                </div>
+                <textarea id="task-desc" class="instruction-input" style="height: 120px; margin-bottom: 0;"
+                    placeholder="예: 학생들은 환경 문제를 조사하고, 해결책을 담은 홍보 포스터를 제작하여 반 친구들에게 발표한다."></textarea>
+            </div>
+
+            <!-- Rubric Builder -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div
+                    style="font-weight: 700; font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="table" style="color: var(--success);"></i> 루브릭 설계
+                    </span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn"
+                            style="padding: 0.4rem 0.9rem; font-size: 0.8rem; background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(244,114,182,0.3)); border: 1px solid rgba(99,102,241,0.4); color: var(--primary-light);"
+                            onclick="suggestRubricDetails()">
+                            <i data-lucide="sparkles"></i> AI 세부 내용 추천
                         </button>
-                        <button class="btn-primary" style="background: #ffffff; color: #000; border: none;"
-                            onclick="openNotebookGuide()">
-                            <span
-                                style="background: #4285f4; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-right: 8px;">N</span>
-                            NotebookLM 협업 가이드
+                        <button class="btn"
+                            style="padding: 0.4rem 0.9rem; font-size: 0.8rem; background: var(--secondary);"
+                            onclick="addRubricRow()">
+                            <i data-lucide="plus-circle"></i> 항목 추가
                         </button>
                     </div>
-
-                    <!-- AI Config (Optional) -->
-                    <div id="ai-config"
-                        style="display: none; margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; border: 1px dashed rgba(236, 72, 153, 0.3);">
-                        <p style="font-size: 0.85rem; margin-bottom: 10px; color: #ec4899;">💡 Gemini API 키를 입력하면
-                            NotebookLM 수준의 실시간 AI 분석이 가능합니다.</p>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="password" id="gemini-key" placeholder="Gemini API Key 입력 (선택사항)"
-                                style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px; border-radius: 8px;">
-                            <button class="btn-primary" style="padding: 10px 20px;" onclick="saveAIConfig()">저장</button>
-                        </div>
-                        <p style="font-size: 0.75rem; margin-top: 8px; color: var(--text-dim);">* 키가 없으면 고성능 알고리즘 시뮬레이션
-                            모드로 작동합니다.</p>
-                    </div>
-
-                    <div id="file-list-container" style="margin-top: 2rem; display: none; text-align: left;">
-                        <p
-                            style="font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-light);">
-                            업로드된 파일 목록</p>
-                        <div id="file-items-list" style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- File items will be injected here -->
-                        </div>
-                    </div>
-
-                    <div id="processing-status" style="margin-top: 2rem; display: none; text-align: left;">
-                        <p id="status-text" style="font-size: 0.9rem; margin-bottom: 8px;">전체 분석 진행 중...</p>
-                        <div class="processing-bar" style="display: block;">
-                            <div id="progress-bar" class="processing-bar-inner"></div>
-                        </div>
-                    </div>
+                </div>
+                <div id="rubric-builder">
+                    <!-- JS Inject -->
                 </div>
             </div>
 
-            <div id="analysis-ready" class="card"
-                style="display: none; border-left: 4px solid var(--success); margin-top: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h4 style="color: var(--success); margin: 0;">통합 분석된 단원 및 핵심 개념</h4>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-primary" id="reset-analysis-btn"
-                            style="padding: 8px 16px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">분석
-                            초기화</button>
-                        <button class="btn-primary" id="open-map-btn" style="padding: 8px 16px; font-size: 0.8rem;">교과
-                            구조도 보기</button>
-                    </div>
-                </div>
-                <div id="dynamic-units"
-                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
-                    <!-- Analysed units will go here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Layer 2: Reconstruction Engine -->
-        <div id="layer2" class="layer-container">
-            <div class="header-section">
-                <h1>재구성 설계 위저드 (항해)</h1>
-                <p>통합 분석된 교과서 데이터와 성취기준을 연결합니다.</p>
-            </div>
-
-            <div class="card">
-                <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-                    <input type="text" id="reconstruction-topic" placeholder="재구성 주제 입력 (예: 환경과 생태계)"
-                        style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 12px 20px; border-radius: 12px; color: white; outline: none;">
-                    <button class="btn-primary" onclick="startMapping()">설계 시작</button>
-                </div>
-
-                <div class="mapping-grid">
-                    <div>
-                        <h4 style="margin-bottom: 1rem; color: var(--primary-light);">1. 성취기준 선택 (나침반)</h4>
-
-                        <div style="display: flex; gap: 15px; align-items: flex-start;">
-                            <div id="curriculum-tree-container" class="tree-container" style="display: none;">
-                                <div
-                                    style="font-weight: 600; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                                    <span>학년-과목 필터</span>
-                                    <button onclick="filterCurriculum(null, null)"
-                                        style="background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">초기화</button>
-                                </div>
-                                <div id="curriculum-tree-root"></div>
-                            </div>
-
-                            <div class="curriculum-list" id="curriculum-list" style="flex: 1;">
-
-                                <!-- JS Injection -->
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 style="margin-bottom: 1rem; color: var(--secondary);">2. 교과서 단원 매핑 (통합 분석 결과)</h4>
-                        <div class="textbook-list" id="textbook-list">
-                            <p id="mapping-placeholder"
-                                style="color: var(--text-dim); font-size: 0.9rem; text-align: center; margin-top: 2rem;">
-                                먼저 Layer 1에서 PDF 분석을 완료해 주세요.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card" id="gap-check-card" style="border-left: 4px solid var(--warning); display: none;">
-                <h4 style="margin-bottom: 10px; color: var(--warning);">학습 결손 실시간 검증</h4>
-                <p id="gap-message" style="font-size: 0.9rem;"></p>
-            </div>
-        </div>
-
-        <!-- Layer 3: Generation & Output -->
-        <div id="layer3" class="layer-container">
-            <div class="header-section">
-                <h1>최종 결과물 생성</h1>
-                <p>설계된 재구성안을 바탕으로 실제 수업 자료를 생성합니다.</p>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
-                <div class="card" style="text-align: center;">
-                    <div
-                        style="width: 60px; height: 60px; background: rgba(99, 102, 241, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
-                            stroke-width="2">
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                    </div>
-                    <h3>차시별 활동지</h3>
-                    <p style="color: var(--text-dim); font-size: 0.9rem; margin-top: 8px; margin-bottom: 1.5rem;">PDF /
-                        HWP 포맷 지원</p>
-                    <button class="btn-primary" style="width: 100%;" onclick="openPreview('activity')">미리보기 &
-                        생성</button>
-                </div>
-
-                <div class="card" style="text-align: center;">
-                    <div
-                        style="width: 60px; height: 60px; background: rgba(236, 72, 153, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)"
-                            stroke-width="2">
-                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                            <line x1="8" y1="21" x2="16" y2="21"></line>
-                            <line x1="12" y1="17" x2="12" y2="21"></line>
-                        </svg>
-                    </div>
-                    <h3>수업용 PPT 개요</h3>
-                    <p style="color: var(--text-dim); font-size: 0.9rem; margin-top: 8px; margin-bottom: 1.5rem;">구조화된
-                        슬라이드 레이아웃</p>
-                    <button class="btn-primary" style="width: 100%;" onclick="openPreview('ppt')">미리보기 & 생성</button>
-                </div>
-
-                <div class="card" style="text-align: center;">
-                    <div
-                        style="width: 60px; height: 60px; background: rgba(6, 182, 212, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)"
-                            stroke-width="2">
-                            <path d="M12 20V10"></path>
-                            <path d="M18 20V4"></path>
-                            <path d="M6 20v-4"></path>
-                        </svg>
-                    </div>
-                    <h3>평가 루브릭</h3>
-                    <p style="color: var(--text-dim); font-size: 0.9rem; margin-top: 8px; margin-bottom: 1.5rem;">성취기준
-                        기반 정밀 척도</p>
-                    <button class="btn-primary" style="width: 100%;" onclick="openPreview('rubric')">미리보기 & 생성</button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal for Preview -->
-    <div id="preview-modal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="card"
-            style="width: 80%; max-width: 800px; max-height: 90vh; overflow-y: auto; background: var(--bg); position: relative;">
-            <button onclick="closePreview()"
-                style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            <h2 id="modal-title" style="margin-bottom: 1.5rem;">결과물 미리보기</h2>
-            <div id="modal-content"
-                style="background: white; color: #333; padding: 2rem; border-radius: 12px; min-height: 400px; font-family: 'Noto Sans KR', sans-serif;">
-                <!-- Preview Content -->
-            </div>
-            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
-                <button class="nav-item" style="background: var(--glass);" onclick="closePreview()">취소</button>
-                <button class="btn-primary" onclick="generateFile()">내보내기 (.pdf)</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+                <button class="btn" style="background: rgba(255,255,255,0.05); color: var(--text-dim);"
+                    onclick="switchLayer(1)">
+                    <i data-lucide="arrow-left"></i> 이전 단계
+                </button>
+                <button class="btn btn-primary" onclick="generateFlowFromAssessment()">
+                    3단계: 수업 흐름 추천 받기 <i data-lucide="arrow-right"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Notification -->
-    <div id="notification"
-        style="position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 12px 24px; border-radius: 12px; transform: translateY(100px); transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 2000;">
-        파일이 성공적으로 생성되었습니다!
-    </div>
+    <!-- Layer 3: Lesson Flow (from Assessment) -->
+    <div id="layer-3" class="layer">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-weight: 700; margin-bottom: 0.5rem;">📚 수업 흐름 추천</h2>
+            <p id="flow-subtitle" style="color: var(--text-dim); font-size: 0.95rem;">평가 계획을 역방향으로 분석하여 수업 흐름을 구성했습니다.
+            </p>
+        </div>
 
-    <!-- NotebookLM Guide Modal -->
-    <div id="notebook-modal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); z-index: 1500; align-items: center; justify-content: center;">
-        <div class="card"
-            style="width: 80%; max-width: 800px; background: var(--bg); position: relative; padding: 2.5rem; border: 1px solid #4285f4;">
-            <button onclick="closeNotebookGuide()"
-                style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 2rem; cursor: pointer;">&times;</button>
-            <h2 style="margin-bottom: 1rem; color: #4285f4;">NotebookLM 협업 브릿지</h2>
-            <p style="color: var(--text-dim); margin-bottom: 2rem;">이미 NotebookLM에 업로드된 자료가 있다면, 아래 프롬프트를 사용하여 고품질 데이터를
-                가져와 보세요.</p>
+        <div class="flow-container" id="flow-board">
+            <!-- JS Inject flow cards -->
+        </div>
 
-            <div
-                style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <p style="font-weight: 700; margin-bottom: 10px; color: #4285f4;">Step 1. NotebookLM에 보낼 마스터 프롬프트 복사</p>
-                <div id="notebook-prompt"
-                    style="font-size: 0.85rem; color: #ccc; background: #000; padding: 10px; border-radius: 4px; margin-bottom: 10px; white-space: pre-wrap;">
-                    "이 교과서 자료를 분석하여, 다음 JSON 형식으로만 응답해줘. 다른 설명은 생략해: [{\"unit\": \"단원명\", \"title\": \"핵심주제\",
-                    \"concepts\": [\"개념1\", \"개념2\"], \"activities\": [\"활동1\"]}]"</div>
-                <button class="btn-primary" style="padding: 8px 16px; font-size: 0.8rem;"
-                    onclick="copyNotebookPrompt()">프롬프트 복사하기</button>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px;">
-                <p style="font-weight: 700; margin-bottom: 10px; color: #4285f4;">Step 2. NotebookLM의 응답 결과(JSON) 붙여넣기
-                </p>
-                <textarea id="notebook-json" placeholder="여기에 JSON 결과를 붙여넣으세요..."
-                    style="width: 100%; height: 120px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 0.8rem;"></textarea>
-                <button class="btn-primary" style="margin-top: 10px; background: #4285f4;"
-                    onclick="importNotebookData()">데이터 가져오기</button>
-            </div>
+        <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: center;">
+            <button class="btn" style="background: rgba(255,255,255,0.05); color: var(--text-dim);"
+                onclick="switchLayer(2)">
+                <i data-lucide="arrow-left"></i> 이전 단계
+            </button>
+            <button class="btn btn-primary" onclick="goToStandardsMapping()">
+                4단계: 성취기준 자동 매핑 <i data-lucide="arrow-right"></i>
+            </button>
         </div>
     </div>
 
-    <!-- Concept Map Modal -->
-    <div id="map-modal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); z-index: 1500; align-items: center; justify-content: center;">
-        <div class="card"
-            style="width: 90%; height: 85vh; background: var(--bg); position: relative; display: flex; flex-direction: column; padding: 2.5rem;">
-            <button onclick="closeConceptMap()"
-                style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 2rem; cursor: pointer; z-index: 10;">&times;</button>
-            <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-                교과 분석 구조도 (System Analysis Concept Map)
-            </h2>
-            <p style="color: var(--text-dim); margin-bottom: 2rem;">업로드된 교과서들에서 추출된 핵심 개념과 활동 간의 논리적 연결망입니다.</p>
+    <!-- Layer 4: Standards Mapping (per lesson) -->
+    <div id="layer-4" class="layer">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-weight: 700; margin-bottom: 0.5rem;">🔗 성취기준 자동 매핑</h2>
+            <p style="color: var(--text-dim); font-size: 0.95rem;">각 차시를 선택하면 관련 성취기준을 자동으로 추천합니다.</p>
+        </div>
 
-            <div id="mermaid-container"
-                style="flex: 1; background: white; border-radius: 16px; overflow: auto; padding: 3rem; display: flex; align-items: flex-start; justify-content: center;">
-                <div id="mermaid-graph" class="mermaid" style="min-width: 100%; text-align: center;">
-                    <!-- Mermaid graph will be injected here -->
+        <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2rem;">
+            <!-- Left: Lesson selector -->
+            <div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-dim); margin-bottom: 1rem;">차시 선택
+                </div>
+                <div id="lesson-tab-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- JS Inject -->
                 </div>
             </div>
 
-            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
-                <button class="btn-primary" onclick="closeConceptMap()">분석 신뢰도 확인 완료</button>
+            <!-- Right: Standards panel -->
+            <div>
+                <div id="mapping-panel">
+                    <!-- JS Inject -->
+                </div>
             </div>
         </div>
+
+        <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: center;">
+            <button class="btn" style="background: rgba(255,255,255,0.05); color: var(--text-dim);"
+                onclick="switchLayer(3)">
+                <i data-lucide="arrow-left"></i> 이전 단계
+            </button>
+            <button class="btn" style="background: var(--success); color: white;"
+                onclick="alert('PDF 내보내기 기능은 준비 중입니다.')">
+                <i data-lucide="download"></i> 결과물 내보내기 (PDF)
+            </button>
+        </div>
     </div>
+</main>
 
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+<!-- Global Loader -->
+<div id="global-loader" class="loading-overlay">
+    <div class="spinner" style="width: 40px; height: 40px; border-width: 4px; margin-bottom: 1.5rem;"></div>
+    <p style="font-weight: 600; font-size: 1.1rem;" id="loader-status">AI 코파일럿이 분석 중입니다...</p>
+</div>
 
-        // Initialize Mermaid
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: 'base',
-            themeVariables: {
-                primaryColor: '#6366f1',
-                primaryTextColor: '#fff',
-                primaryBorderColor: '#6366f1',
-                lineColor: '#94a3b8',
-                secondaryColor: '#ec4899',
-                tertiaryColor: '#0ea5e9'
-            }
+<script>
+    // ─────────────────────────────────────────────
+    // 1. 전역 상태 관리
+    // ─────────────────────────────────────────────
+    let curriculumDB = [];
+    let selectedSubjects = ['국어', '사회'];
+    let currentPrompt = '';
+    let assessmentPlan = { taskTypes: [], customTaskType: '', taskDesc: '', rubric: [] };
+    let lessonFlow = [];
+    let selectedLessonIdx = 0;
+    let lessonMappedStandards = {}; // key: lessonId, value: [standard ids]
+
+    // 수행 동사 → 과제 유형 매핑
+    const VERB_TO_TASK_MAP = [
+        { verbs: ['발표', '프레젠테이션', '설명'], type: '🎤 발표하기' },
+        { verbs: ['쓴다', '작성', '기록', '설명문', '보고서'], type: '📝 보고서 작성' },
+        { verbs: ['만든다', '제작', '창작', '표현', '그린다'], type: '🎨 작품 제작' },
+        { verbs: ['토의', '토론', '의견', '회의'], type: '💬 토론/토의' },
+        { verbs: ['조사', '탐구', '분석', '비교'], type: '🔍 탐구 보고서' },
+        { verbs: ['참여', '활동', '실천', '실시'], type: '🏃 활동 참여' },
+    ];
+
+    // 과목별 아이콘
+    const subjectIcons = { '국어': 'book-open', '사회': 'map-pin', '과학': 'beaker', '도덕': 'heart', '미술': 'palette', '음악': 'music', '체육': 'activity' };
+
+    // ─────────────────────────────────────────────
+    // 2. DOMContentLoaded 초기화
+    // ─────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+
+        document.querySelectorAll('.subject-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const sub = chip.dataset.subject;
+                if (chip.classList.contains('active')) {
+                    chip.classList.remove('active');
+                    selectedSubjects = selectedSubjects.filter(s => s !== sub);
+                } else {
+                    chip.classList.add('active');
+                    selectedSubjects.push(sub);
+                }
+            });
         });
 
-        let extractedText = "";
-        let analysedUnits = [];
-        let useAIAnalytics = false;
-        let geminiApiKey = "";
+        // 루브릭 초기 3행
+        ['내용의 정확성', '표현력', '참여 태도'].forEach(name => addRubricRow(name));
+        renderRubricHeader();
+    });
 
-        function toggleAIMode() {
-            const config = document.getElementById('ai-config');
-            config.style.display = config.style.display === 'none' ? 'block' : 'none';
-        }
+    // ─────────────────────────────────────────────
+    // 3. 파일 업로드 & 파싱 (SheetJS + 스마트 인코딩)
+    // ─────────────────────────────────────────────
+    function handleFileUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const statusEl = document.getElementById('file-status');
+        statusEl.innerText = '파일 분석 중...';
+        statusEl.style.color = 'var(--primary-light)';
+        const reader = new FileReader();
+        const ext = file.name.split('.').pop().toLowerCase();
 
-        function saveAIConfig() {
-            geminiApiKey = document.getElementById('gemini-key').value;
-            useAIAnalytics = true;
-            alert("AI 전문가 모드가 활성화되었습니다. 파일을 업로드하면 정밀 분석을 수행합니다.");
-            document.getElementById('ai-config').style.display = 'none';
-            document.getElementById('ai-mode-btn').style.boxShadow = "0 0 15px rgba(236, 72, 153, 0.5)";
-        }
-
-        // NotebookLM Integration
-        function openNotebookGuide() {
-            document.getElementById('notebook-modal').style.display = 'flex';
-        }
-
-        function closeNotebookGuide() {
-            document.getElementById('notebook-modal').style.display = 'none';
-        }
-
-        function copyNotebookPrompt() {
-            const prompt = document.getElementById('notebook-prompt').innerText;
-            navigator.clipboard.writeText(prompt);
-            alert("프롬프트가 클립보드에 복사되었습니다. NotebookLM에 붙여넣어 보세요!");
-        }
-
-        function importNotebookData() {
-            const jsonStr = document.getElementById('notebook-json').value;
+        reader.onload = function (e) {
+            const data = e.target.result;
             try {
-                const data = JSON.parse(jsonStr);
-                if (!Array.isArray(data)) throw new Error("배열 형태여야 합니다.");
-
-                const formatted = data.map(u => ({
-                    ...u,
-                    id: 'NB' + Date.now() + Math.random(),
-                    isAI: true,
-                    unit: 'NotebookLM: ' + (u.unit || '분석 단원')
-                }));
-
-                analysedUnits = [...analysedUnits, ...formatted];
-                renderAnalysedUnits();
-                document.getElementById('analysis-ready').style.display = 'block';
-                alert(`${formatted.length}개의 분석 데이터를 성공적으로 가져왔습니다!`);
-                closeNotebookGuide();
-            } catch (err) {
-                alert("JSON 형식이 올바르지 않습니다. NotebookLM의 응답을 그대로 복사했는지 확인해 주세요. (에러: " + err.message + ")");
-            }
-        }
-
-        // Concept Map Functions
-        function sanitizeMermaid(str) {
-            if (!str) return '무제';
-            // Replace risky characters that break Mermaid syntax with spaces
-            return str.replace(/["'\[\]\(\)\{\}\<\>\;\:\n\r\|]/g, ' ').trim();
-        }
-
-        async function openConceptMap() {
-            const modal = document.getElementById('map-modal');
-            const container = document.getElementById('mermaid-graph');
-            modal.style.display = 'flex';
-
-            if (analysedUnits.length === 0) {
-                container.innerHTML = "<div style='color: var(--text-dim); text-align: center; padding: 2rem;'>분석된 데이터가 없습니다. 먼저 PDF를 업로드해 주세요.</div>";
-                return;
-            }
-
-            // Use simple graph TD only - no classDef, no subgraph, no CSS variables
-            // (Mermaid v11 breaks with complex inline CSS in classDef)
-            let graphDefinition = "graph TD\n";
-
-            const max = Math.min(analysedUnits.length, 8); // cap nodes to avoid huge graphs
-            for (let uIdx = 0; uIdx < max; uIdx++) {
-                const unit = analysedUnits[uIdx];
-                const nodeUid = `U${uIdx}`;
-                const safeTitle = sanitizeMermaid(unit.title).slice(0, 20) || `단원${uIdx + 1}`;
-                graphDefinition += `  ${nodeUid}["${safeTitle}"]\n`;
-
-                const maxConcepts = Math.min(unit.concepts.length, 4);
-                for (let cIdx = 0; cIdx < maxConcepts; cIdx++) {
-                    const cId = `C${uIdx}_${cIdx}`;
-                    const safeC = sanitizeMermaid(unit.concepts[cIdx]).slice(0, 15) || `개념${cIdx + 1}`;
-                    graphDefinition += `  ${cId}("${safeC}")\n`;
-                    graphDefinition += `  ${nodeUid} --> ${cId}\n`;
-                }
-
-                const maxActs = Math.min(unit.activities.length, 3);
-                for (let aIdx = 0; aIdx < maxActs; aIdx++) {
-                    const aId = `A${uIdx}_${aIdx}`;
-                    const safeA = sanitizeMermaid(unit.activities[aIdx]).slice(0, 15) || `활동${aIdx + 1}`;
-                    graphDefinition += `  ${aId}["▶ ${safeA}"]\n`;
-                    graphDefinition += `  ${nodeUid} -.-> ${aId}\n`;
-                }
-            }
-
-            container.removeAttribute('data-processed');
-            container.innerHTML = '';
-            const el = document.createElement('div');
-            el.className = 'mermaid';
-            el.textContent = graphDefinition;
-            container.appendChild(el);
-
-            try {
-                await mermaid.run({ nodes: [el] });
-            } catch (e) {
-                console.error('Mermaid render error:', e);
-                container.innerHTML = `<pre style="color:#f59e0b; font-size:0.8rem; white-space:pre-wrap; padding:1rem;">누락된 단원 데이터를 기반으로 구조도 생성에 실패했습니다.\n\n혹시 PDF 분석 후 단원이 아도 없거나, 단원 제목에 올음 없는 문자가 포함된 실동이 있을 수 있습니다.\n\nraw:\n${graphDefinition}</pre>`;
-            }
-        }
-
-        function closeConceptMap() {
-            document.getElementById('map-modal').style.display = 'none';
-        }
-
-        // Preview Functions
-        function openPreview(type) {
-            const modal = document.getElementById('preview-modal');
-            const title = document.getElementById('modal-title');
-            const content = document.getElementById('modal-content');
-
-            modal.style.display = 'flex';
-
-            if (type === 'activity') {
-                title.innerText = '차시별 활동지 미리보기';
-                content.innerHTML = `
-                    <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h1 style="text-align: center;">[활동지] ${document.getElementById('reconstruction-topic').value || '통합 주제 수업'}</h1>
-                    </div>
-                    <p><strong>주요 단원:</strong> ${analysedUnits.slice(0, 2).map(u => u.unit + '. ' + u.title).join(' / ')}</p>
-                    <p><strong>성취기준:</strong> [6과01-01] 생태계 구성 요소 설명 외</p>
-                    <div style="margin-top: 30px; border: 1px solid #ccc; padding: 20px;">
-                        <h3>통합 주제 탐구: ${document.getElementById('reconstruction-topic').value || '환경과 생태계'}</h3>
-                        <p style="color: #666;">여러 교과서에서 분석된 다음 핵심 개념들을 융합하여 생각해 봅시다.</p>
-                        <div style="display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap;">
-                            ${[...new Set(analysedUnits.flatMap(u => u.concepts))].slice(0, 8).map(c => `<span style="background: #eee; padding: 5px 10px; border-radius: 4px;">${c}</span>`).join('')}
-                        </div>
-                        <div style="height: 100px; border: 1px dashed #aaa; margin-top: 10px;"></div>
-                    </div>
-                `;
-            } else if (type === 'rubric') {
-                title.innerText = '평가 루브릭 미리보기';
-                content.innerHTML = `<p>통합 분석 데이터를 기반으로 루브릭을 구성 중입니다...</p>`;
-            } else {
-                title.innerText = '수업용 PPT 개요 미리보기';
-                content.innerHTML = `<p>통합 수업 흐름에 따른 PPT 구조를 설계 중입니다...</p>`;
-            }
-        }
-
-        function closePreview() {
-            document.getElementById('preview-modal').style.display = 'none';
-        }
-
-        function generateFile() {
-            closePreview();
-            const noti = document.getElementById('notification');
-            noti.style.transform = 'translateY(0)';
-            setTimeout(() => {
-                noti.style.transform = 'translateY(100px)';
-            }, 3000);
-        }
-
-        // Mutable Database & Search Filter
-        let curriculumDB = [];
-        let currentSearchKeyword = "";
-
-        // Layer Switching
-        function switchLayer(layerNum) {
-            document.querySelectorAll('.layer-container').forEach(l => l.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-            document.getElementById(`layer${layerNum}`).classList.add('active');
-
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems[layerNum - 1].classList.add('active');
-
-            if (layerNum === 2) {
-                renderMappingItems();
-            }
-        }
-
-        // Real PDF Processing (Multiple Files)
-        function parseCurriculumText(text) {
-            const newDB = [];
-            // Match highly specific code pattern allowing random spaces (e.g., "6 과 0 1 - 0 1", "[10국 02-01]")
-            const regex = /([0-9]\s*[0-9]?\s*[가-힣a-zA-Z](?:\s*[가-힣a-zA-Z]){0,3}\s*[0-9]\s*[0-9]\s*-\s*[0-9]\s*[0-9])[\]\)]?\s*([^\[\(\n]{5,200})/g;
-            let match;
-            let idCounter = 1;
-            while ((match = regex.exec(text)) !== null) {
-                const cleanCode = match[1].replace(/\s+/g, '');
-                const code = `[${cleanCode}]`;
-                const contentText = match[2].trim().replace(/\s+/g, ' ');
-                let subject = '공통';
-                // Try to guess subject from code: "6과01-01" -> "과" -> 과학
-                if (cleanCode.includes('과') && !cleanCode.includes('과목')) subject = '과학';
-                else if (cleanCode.includes('사')) subject = '사회';
-                else if (cleanCode.includes('국')) subject = '국어';
-                else if (cleanCode.includes('수')) subject = '수학';
-                else if (cleanCode.includes('도') || cleanCode.includes('덕')) subject = '도덕';
-                else if (cleanCode.includes('미')) subject = '미술';
-                else if (cleanCode.includes('음')) subject = '음악';
-                else if (cleanCode.includes('체')) subject = '체육';
-                else if (cleanCode.includes('영')) subject = '영어';
-
-                newDB.push({
-                    id: `C_USER_${idCounter++}`,
-                    subject: subject,
-                    code: code,
-                    content: contentText.length > 200 ? contentText.substring(0, 200) + '...' : contentText
-                });
-            }
-
-            // Fallback: If no code style was matched, maybe it's just a raw text document.
-            if (newDB.length === 0) {
-                console.log("No specific codes found. Using fallback text extraction...");
-                const fallbackRegex = /([가-힣a-zA-Z0-9\s,]{15,120}(?:한다|있다|이다|수 있다|해결한다|다룬다|그린다|부른다|만든다|참여한다)\.)/g;
-                let fbMatch;
-                while ((fbMatch = fallbackRegex.exec(text)) !== null) {
-                    newDB.push({
-                        id: `C_USER_${idCounter++}`,
-                        subject: '자율/통합',
-                        code: '[-] 문서추출',
-                        content: fbMatch[1].trim()
-                    });
-                }
-            }
-
-            return newDB;
-        }
-
-        // Real PDF Processing (Multiple Files) & TXT/CSV/JSON Curriculum Upload
-        async function handleCurriculumUpload(event) {
-            console.log("Curriculum Upload event triggered.");
-            const file = event.target.files[0];
-            if (!file) {
-                console.log("No file selected.");
-                return;
-            }
-            console.log("Selected file:", file.name, file.type, file.size);
-
-            try {
-                document.getElementById('db-status-desc').innerText = "파일을 분석 중입니다... 잠시만 기다려주세요.";
-                let newDB = [];
-                const lowerName = file.name.toLowerCase();
-
-                if (lowerName.endsWith('.pdf')) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    let fullText = "";
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        fullText += textContent.items.map(item => item.str).join(" ") + " ";
+                let workbook;
+                let encLabel = '';
+                if (ext === 'csv') {
+                    try {
+                        const text = new TextDecoder('utf-8', { fatal: true }).decode(data);
+                        workbook = XLSX.read(text, { type: 'string' });
+                        encLabel = 'UTF-8';
+                    } catch {
+                        const text = new TextDecoder('euc-kr').decode(data);
+                        workbook = XLSX.read(text, { type: 'string' });
+                        encLabel = 'EUC-KR';
                     }
-                    newDB = parseCurriculumText(fullText);
                 } else {
-                    const text = await file.text();
-                    if (lowerName.endsWith('.json')) {
-                        const parsed = JSON.parse(text);
-                        if (!Array.isArray(parsed)) throw new Error("JSON 최상위가 배열이어야 합니다.");
-                        newDB = parsed.map((item, idx) => ({
-                            id: item.id || `C_USER_${idx}`,
-                            subject: item.subject || '공통',
-                            code: item.code || '-',
-                            content: item.content || '내용 없음'
-                        }));
-                    } else if (lowerName.endsWith('.csv')) {
-                        const lines = text.split('\n').filter(line => line.trim() !== '');
-                        const firstLine = lines[0].toLowerCase();
-                        let startIndex = 0;
-                        if (firstLine.includes('id') || firstLine.includes('subject') || firstLine.includes('과목')) {
-                            startIndex = 1;
-                        }
-                        for (let i = startIndex; i < lines.length; i++) {
-                            const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
-                            if (cols.length >= 3) {
-                                newDB.push({
-                                    id: cols[0] || `C_USER_${i}`,
-                                    subject: cols[1] || '공통',
-                                    code: cols[2] || '-',
-                                    content: cols[3] || cols[2]
-                                });
-                            }
-                        }
-                    } else if (lowerName.endsWith('.txt')) {
-                        newDB = parseCurriculumText(text);
+                    workbook = XLSX.read(data, { type: 'array' });
+                    encLabel = 'Excel';
+                }
+
+                const ws = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(ws);
+
+                curriculumDB = jsonData.map((item, idx) => {
+                    let subject = item.subject || item['과목'] || item['교과'] || '';
+                    let grade = item.grade || item['학년'] || '';
+                    let code = item.code || item['코드'] || item['성취기준코드'] || '';
+                    let content = item.content || item['내용'] || item['성취기준'] || '';
+
+                    if (!code || !content) {
+                        const full = Object.values(item).join(' ');
+                        const m = full.match(/\[([^\]]+)\]/);
+                        if (m) {
+                            code = `[${m[1]}]`;
+                            const parts = full.split(code);
+                            if (!subject) subject = parts[0].trim().split(/\s/)[0];
+                            if (!content) content = parts[1]?.trim() || '';
+                        } else { content = full; }
                     }
-                }
+                    return { id: idx + 1, subject: subject || '미분류', grade, code, content };
+                });
 
-                // Deduplicate and Merge using Set
-                const existingCodes = new Set(curriculumDB.map(item => item.code));
-                const uniqueNewDB = newDB.filter(item => !existingCodes.has(item.code));
-
-                curriculumDB = [...curriculumDB, ...uniqueNewDB];
-                buildCurriculumTree();
-
-                alert(`교육과정 DB가 성공적으로 최신화되었습니다! (기존 대비 ${uniqueNewDB.length}개 항목이 추가되었습니다 / 총 ${curriculumDB.length}개)`);
-
-                // Update Layer 1 Status UI
-                const titleEl = document.getElementById('db-status-title');
-                if (titleEl) {
-                    titleEl.innerText = '사용자 커스텀 교육과정 DB 로드 완료';
-                    document.getElementById('db-status-subtitle').innerText = `총 ${curriculumDB.length}개의 맞춤형 성취기준 매핑 대기중`;
-                    document.getElementById('db-status-desc').innerText = `업로드된 파일(${file.name})을 기반으로 모든 재구성 프로세스가 설계됩니다.`;
-
-                    const tagEl = document.getElementById('db-active-tag');
-                    tagEl.innerText = '커스텀 DB 작동중';
-                    tagEl.className = 'tag tag-primary';
-                    tagEl.style.background = 'rgba(236, 72, 153, 0.2)';
-                    tagEl.style.color = '#ec4899';
-                }
-
-                // Re-render UI if mapping widget is currently active
-                if (document.getElementById('layer2').classList.contains('active')) {
-                    renderMappingItems();
-                }
+                statusEl.innerText = `성공: ${curriculumDB.length}개 로드됨 (${encLabel})`;
+                statusEl.style.color = 'var(--success)';
+                showPreview();
+                lucide.createIcons();
             } catch (err) {
-                console.error("Curriculum Parser Error:", err);
-                alert("설정된 문서 파싱 정책으로 성취기준을 찾지 못했습니다.\n(자세한 에러는 콘솔을 확인하세요)\n\n" + err.message);
-                document.getElementById('db-status-desc').innerText = "파일에서 성취기준 데이터를 찾을 수 없어 빈 상태로 유지합니다. 올바른 2022 개정 교육과정 형식(코드포함)의 파일을 다시 업로드해 주세요.";
-            } finally {
-                // Allow re-uploading the exact same file
-                event.target.value = '';
+                console.error(err);
+                statusEl.innerText = '오류: 파일 형식을 확인하세요.';
+                statusEl.style.color = 'var(--warning)';
             }
-        }
+        };
+        reader.readAsArrayBuffer(file);
+    }
 
-        async function handleFileSelect(event) {
-            const files = Array.from(event.target.files);
-            if (files.length > 0) {
-                processMultipleFiles(files);
-            }
-        }
+    function showPreview() {
+        const el = document.getElementById('data-preview');
+        el.style.display = 'block';
+        document.getElementById('preview-list').innerHTML = curriculumDB.slice(0, 3).map(s => `
+                <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding:0.5rem 0;">
+                    <span style="background:var(--primary); color:white; padding:1px 6px; border-radius:4px; font-size:0.65rem;">${s.subject}</span>
+                    <strong style="color:var(--primary-light); margin-left:0.4rem;">${s.code}</strong>
+                    <div style="color:var(--text-dim); margin-top:2px; font-size:0.78rem;">${s.content.substring(0, 50)}${s.content.length > 50 ? '...' : ''}</div>
+                </div>
+            `).join('');
+    }
 
-        async function processMultipleFiles(files) {
-            const container = document.getElementById('file-list-container');
-            const list = document.getElementById('file-items-list');
-            const status = document.getElementById('processing-status');
-            const progress = document.getElementById('progress-bar');
+    // ─────────────────────────────────────────────
+    // 4. Layer 전환
+    // ─────────────────────────────────────────────
+    function switchLayer(n) {
+        document.querySelectorAll('.layer').forEach(l => l.classList.remove('active'));
+        document.getElementById(`layer-${n}`).classList.add('active');
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        for (let i = 1; i <= n; i++) document.getElementById(`step-${i}`)?.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-            container.style.display = 'block';
-            status.style.display = 'block';
-            list.innerHTML = '';
-            analysedUnits = [];
-            extractedText = "";
+    function showLoader(text) { document.getElementById('loader-status').innerText = text; document.getElementById('global-loader').style.display = 'flex'; }
+    function hideLoader() { document.getElementById('global-loader').style.display = 'none'; }
 
-            // Initialize file items in UI
-            const fileItems = files.map((file, index) => {
-                const item = document.createElement('div');
-                item.className = 'item-card';
-                item.style.marginBottom = '5px';
-                item.style.padding = '10px';
-                item.id = `file-item-${index}`;
-                item.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;">📄 ${file.name}</span>
-                        <span class="tag tag-info" id="file-status-${index}">대기 중</span>
-                    </div>
-                `;
-                list.appendChild(item);
-                return { file, index };
+    // ─────────────────────────────────────────────
+    // 5. Layer 1 → Layer 2
+    // ─────────────────────────────────────────────
+    function goToAssessment() {
+        if (curriculumDB.length === 0) { alert('성취기준 데이터를 먼저 업로드해 주세요! (CSV 또는 Excel)'); return; }
+        const inp = document.getElementById('prompt-input');
+        currentPrompt = inp.value.trim();
+        if (!currentPrompt) { document.getElementById('prompt-error').style.display = 'block'; inp.focus(); return; }
+        document.getElementById('prompt-error').style.display = 'none';
+
+        renderTaskTypeChips();
+        switchLayer(2);
+    }
+
+    // 성취기준에서 수행 동사 분석 → 과제 유형 추출
+    function renderTaskTypeChips() {
+        const found = new Set(['📁 포트폴리오', '✏️ 직접 입력']);
+
+        // 선택된 교과의 성취기준만 분석
+        const relevantDB = curriculumDB.filter(d => selectedSubjects.includes(d.subject));
+        relevantDB.forEach(item => {
+            VERB_TO_TASK_MAP.forEach(({ verbs, type }) => {
+                if (verbs.some(v => item.content.includes(v))) found.add(type);
             });
+        });
 
-            let completed = 0;
-            for (const item of fileItems) {
-                const statusTag = document.getElementById(`file-status-${item.index}`);
-                statusTag.innerText = '분석 중...';
-                statusTag.className = 'tag tag-info';
+        const container = document.getElementById('task-type-chips');
+        container.innerHTML = Array.from(found).map(type => `
+                <div class="subject-chip task-type-chip" data-type="${type}" onclick="toggleTaskType(this, '${type.replace(/'/g, "\\'")}')">
+                    ${type}
+                </div>
+            `).join('') + `
+            <div id="custom-task-input-wrap" style="display:none; margin-top:0.7rem; width:100%;">
+                <input id="custom-task-input" type="text" placeholder="수행과제 유형 직접 입력 (예: 캠페인 활동, 역할극 등)"
+                    style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--primary); border-radius:8px; padding:0.6rem 1rem; color:white; font-size:0.9rem;"
+                    oninput="assessmentPlan.customTaskType = this.value">
+            </div>`;
+        assessmentPlan.taskTypes = [];
+        lucide.createIcons();
+    }
 
-                await processPDF(item.file);
+    function toggleTaskType(el, type) {
+        const isCustom = type === '✏️ 직접 입력';
+        if (el.classList.contains('active')) {
+            el.classList.remove('active');
+            assessmentPlan.taskTypes = assessmentPlan.taskTypes.filter(t => t !== type);
+        } else {
+            el.classList.add('active');
+            assessmentPlan.taskTypes.push(type);
+        }
+        // 직접 입력 선택 시 입력창 토글
+        const customWrap = document.getElementById('custom-task-input-wrap');
+        const hasCustom = assessmentPlan.taskTypes.includes('✏️ 직접 입력');
+        customWrap.style.display = hasCustom ? 'block' : 'none';
+        if (!hasCustom) assessmentPlan.customTaskType = '';
+    }
 
-                statusTag.innerText = '완료';
-                statusTag.className = 'tag tag-success';
-                completed++;
-                progress.style.width = (completed / files.length * 100) + '%';
-            }
+    // ─────────────────────────────────────────────
+    // 6. 루브릭 빌더 (단계 편집 가능)
+    // ─────────────────────────────────────────────
+    let rubricLevels = ['상 (탁월)', '중 (적절)', '하 (기초)']; // 기본 단계
 
-            document.getElementById('analysis-ready').style.display = 'block';
+    function renderRubricHeader() {
+        let header = document.getElementById('rubric-header');
+        const builder = document.getElementById('rubric-builder');
 
-            if (useAIAnalytics || geminiApiKey) {
-                await processWithGemini(extractedText);
-            }
+        if (header) header.remove();
 
-            renderAnalysedUnits();
+        header = document.createElement('div');
+        header.id = 'rubric-header';
+        header.style.cssText = `display:grid; grid-template-columns:180px ${rubricLevels.map(() => '1fr').join(' ')} auto auto; gap:0.5rem; margin-bottom:0.5rem; align-items:center;`;
+
+        const levelCols = rubricLevels.map((level, idx) => `
+            <div style="display:flex; gap:0.3rem; align-items:center;">
+                <input value="${level}" onchange="rubricLevels[${idx}]=this.value; refreshRubricRows()"
+                    style="font-size:0.75rem; color:var(--primary-light); font-weight:600; background:transparent; border:none; border-bottom:1px dashed rgba(99,102,241,0.4); color:var(--primary-light); width:80px; padding:2px 0;"
+                    title="클릭하여 단계 이름 편집">
+            </div>
+        `).join('');
+
+        header.innerHTML = `
+            <span style="font-size:0.75rem; color:var(--text-dim); font-weight:600;">평가 항목</span>
+            ${levelCols}
+            <button onclick="addRubricLevel()" title="단계 추가" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); color:var(--primary-light); border-radius:6px; padding:2px 7px; cursor:pointer; font-size:0.75rem;">+단계</button>
+            <button onclick="removeRubricLevel()" title="마지막 단계 삭제" style="background:rgba(255,80,80,0.1); border:1px solid rgba(255,80,80,0.2); color:#f87171; border-radius:6px; padding:2px 7px; cursor:pointer; font-size:0.75rem; ${rubricLevels.length <= 1 ? 'opacity:0.3;pointer-events:none;' : ''}">-단계</button>
+        `;
+        builder.insertBefore(header, builder.firstChild);
+    }
+
+    function addRubricLevel() {
+        rubricLevels.push('단계 ' + (rubricLevels.length + 1));
+        refreshRubricRows();
+    }
+
+    function removeRubricLevel() {
+        if (rubricLevels.length <= 1) return;
+        rubricLevels.pop();
+        refreshRubricRows();
+    }
+
+    function refreshRubricRows() {
+        const rows = Array.from(document.querySelectorAll('#rubric-builder > div:not(#rubric-header)'));
+        const savedNames = rows.map(r => r.querySelector('input')?.value || '');
+        rows.forEach(r => r.remove());
+        renderRubricHeader();
+        savedNames.forEach(name => addRubricRow(name));
+    }
+
+    function addRubricRow(defaultName = '') {
+        const builder = document.getElementById('rubric-builder');
+        if (!document.getElementById('rubric-header')) renderRubricHeader();
+
+        const rowId = Date.now() + Math.random();
+        const div = document.createElement('div');
+        div.id = `rubric-row-${rowId}`;
+        div.style.cssText = `display:grid; grid-template-columns:180px ${rubricLevels.map(() => '1fr').join(' ')} auto auto; gap:0.5rem; margin-bottom:0.6rem; align-items:center;`;
+
+        const levelInputs = rubricLevels.map((level, idx) =>
+            `<input placeholder="${level}" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:8px; padding:0.5rem 0.7rem; color:white; font-size:0.78rem; width:100%;">`
+        ).join('');
+
+        div.innerHTML = `
+            <input value="${defaultName}" placeholder="평가 항목명" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:8px; padding:0.5rem 0.8rem; color:white; font-size:0.85rem; width:100%;">
+            ${levelInputs}
+            <span></span>
+            <button onclick="document.getElementById('rubric-row-${rowId}').remove()" style="background:rgba(255,80,80,0.15); border:1px solid rgba(255,80,80,0.3); color:#f87171; border-radius:8px; padding:0.4rem 0.7rem; cursor:pointer; font-size:0.8rem;">✕</button>
+        `;
+        builder.appendChild(div);
+    }
+
+    function getRubricData() {
+        const rows = document.querySelectorAll('#rubric-builder > div:not(#rubric-header)');
+        return Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input');
+            const name = inputs[0]?.value || '';
+            const levels = {};
+            rubricLevels.forEach((level, i) => { levels[level] = inputs[i + 1]?.value || ''; });
+            return { name, levels };
+        }).filter(r => r.name);
+    }
+
+    // ─────────────────────────────────────────────
+    // 6-1. 루브릭 AI 세부 내용 추천
+    // ─────────────────────────────────────────────
+    async function suggestRubricDetails() {
+        const taskDesc = document.getElementById('task-desc').value.trim();
+        const taskTypesLabel = assessmentPlan.taskTypes
+            .map(t => t === '✏️ 직접 입력' ? assessmentPlan.customTaskType : t)
+            .join(', ') || '수행과제';
+
+        if (!taskDesc) {
+            alert('먼저 최종 수행과제 내용을 입력해 주세요. 입력한 내용을 바탕으로 추천해 드립니다.');
+            document.getElementById('task-desc').focus();
+            return;
         }
 
-        async function processWithGemini(text) {
-            const statusText = document.getElementById('status-text');
-            statusText.innerHTML = `<span style="color: #ec4899;">✨ Gemini AI가 교과서 문맥을 정밀 분석 중입니다 (NotebookLM Engine)...</span>`;
+        // 로딩 상태
+        const btn = document.querySelector('[onclick="suggestRubricDetails()"]');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;"></div> 분석 중...';
+        btn.disabled = true;
 
-            if (!geminiApiKey) {
-                await new Promise(r => setTimeout(r, 2000));
-                const aiUnits = [
-                    { unit: "융합 단원: 기후 위기와 우리", title: "생태계 평형과 탄소 중립의 실천", concepts: ["탄소발자국", "생태순환", "에너지 효율"], activities: ["기후 재난 시뮬레이션", "학교 에너지 정밀 진단"] },
-                    { unit: "생활 속의 과학 단원", title: "인공지능과 윤리적 실천", concepts: ["알고리즘 편향", "데이터 주권"], activities: ["AI 윤리 가이드라인 제작"] }
+        await new Promise(r => setTimeout(r, 1200));
+
+        // 루브릭 행들 분석
+        const rows = document.querySelectorAll('#rubric-builder > div:not(#rubric-header)');
+
+        // 과제 내용에서 키워드 추출
+        const isPresentation = taskTypesLabel.includes('발표') || taskDesc.includes('발표');
+        const isWriting = taskTypesLabel.includes('보고서') || taskDesc.includes('작성') || taskDesc.includes('쓴다');
+        const isArt = taskTypesLabel.includes('작품') || taskDesc.includes('만든다') || taskDesc.includes('제작');
+        const isDiscussion = taskTypesLabel.includes('토론') || taskDesc.includes('토의') || taskDesc.includes('토론');
+        const isResearch = taskTypesLabel.includes('탐구') || taskDesc.includes('조사') || taskDesc.includes('탐구');
+
+        // 평가 항목명 → 수준별 기술어 패턴 매핑
+        const RUBRIC_PATTERNS = {
+            // 내용/지식 관련
+            '정확성': ['핵심 내용을 완전히 이해하고 오류 없이 표현한다', '대부분의 내용을 이해하나 일부 오류가 있다', '기본 개념 이해가 부족하거나 주요 오류가 있다'],
+            '내용': ['핵심 개념을 깊이 있게 다루고 근거가 풍부하다', '핵심 개념을 다루나 근거가 부족한 부분이 있다', '핵심 개념 파악이 미흡하고 근거가 부족하다'],
+            '이해': ['내용을 정확하게 이해하고 적용할 수 있다', '대부분의 내용을 이해하나 적용에 어려움이 있다', '기본 내용 이해가 어렵고 도움이 필요하다'],
+            '지식': ['관련 지식을 폭넓고 정확하게 활용한다', '관련 지식을 부분적으로 활용한다', '관련 지식 활용이 미흡하다'],
+
+            // 표현/소통 관련
+            '표현': [
+                isPresentation ? '논리적이고 자신감 있게 발표하며 청중의 이해를 돕는다' : '아이디어를 명확하고 창의적으로 표현한다',
+                isPresentation ? '대체로 명확하게 발표하나 논리 구성이 일부 부족하다' : '아이디어를 표현하나 명확성이 부족한 부분이 있다',
+                isPresentation ? '발표 내용 전달이 어렵고 논리 구성이 미흡하다' : '아이디어 표현에 어려움을 보인다',
+            ],
+            '발표': ['목소리, 눈맞춤, 자료 활용 등 모든 면에서 우수한 발표를 한다', '발표 내용은 갖추었으나 전달력에서 아쉬움이 있다', '발표 준비가 부족하고 전달이 어렵다'],
+            '글쓰기': ['문장 구조가 정확하고 내용이 논리적으로 잘 연결된다', '대체로 글이 자연스럽나 문장 구조나 흐름이 다소 어색하다', '문장 구조가 불명확하고 내용 연결이 어렵다'],
+
+            // 창의성/사고
+            '창의': ['독창적인 아이디어와 참신한 시각으로 과제를 수행한다', '아이디어는 있으나 참신성이 다소 부족하다', '기존 내용을 따르며 창의적 표현이 거의 없다'],
+            '사고': ['다양한 관점으로 분석하고 비판적 사고를 발휘한다', '분석을 시도하나 다양한 관점 탐색이 제한적이다', '분석이나 비판적 사고가 미흡하다'],
+            '문제': ['문제를 정확히 파악하고 효과적인 해결책을 제시한다', '문제를 파악하나 해결책의 실현 가능성이 낮다', '문제 파악이 미흡하고 해결책 제시가 어렵다'],
+
+            // 태도/협력
+            '태도': ['적극적으로 참여하며 모든 활동에 책임감 있게 임한다', '대체로 성실하게 참여하나 일부 소극적인 모습이 있다', '참여도가 낮고 책임감이 부족하다'],
+            '참여': ['수업 전 과정에 주도적이고 적극적으로 참여한다', '대체로 참여하나 일부 활동에 수동적이다', '참여가 저조하고 독려가 필요하다'],
+            '협력': ['모둠 구성원과 역할을 분담하고 적극적으로 협동한다', '협력하나 역할 분담과 소통이 일부 부족하다', '협력이 미흡하고 역할 수행에 어려움을 보인다'],
+            '소통': ['자신의 의견을 명확하게 표현하고 타인의 의견을 경청한다', '소통은 하나 경청이나 표현이 부족한 면이 있다', '소통에 어려움을 보이며 적극성이 낮다'],
+
+            // 결과물/완성도
+            '완성도': ['과제의 모든 요소를 완성하고 높은 수준으로 마무리했다', '대부분 완성하였으나 일부 요소가 미흡하다', '완성 수준이 낮고 주요 요소가 빠져있다'],
+            '자료': [
+                isResearch ? '다양한 자료를 수집·분석하고 출처를 명확히 밝혔다' : '자료를 적절히 활용하여 과제를 구성했다',
+                isResearch ? '자료를 수집하였으나 분석이나 출처 처리가 미흡하다' : '자료 활용이 전반적으로 부족하다',
+                isResearch ? '자료 수집이 부족하고 분석이 이루어지지 않았다' : '자료 활용이 거의 없다',
+            ],
+        };
+
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const criterionName = inputs[0]?.value || '';
+            if (!criterionName) return;
+
+            // 항목명으로 패턴 찾기
+            let matched = null;
+            for (const [keyword, descs] of Object.entries(RUBRIC_PATTERNS)) {
+                if (criterionName.includes(keyword)) {
+                    matched = descs;
+                    break;
+                }
+            }
+
+            // 매칭된 패턴이 없으면 일반 패턴
+            if (!matched) {
+                matched = [
+                    `「${criterionName}」 항목에서 탁월한 수준을 보인다`,
+                    `「${criterionName}」 항목에서 적절한 수준을 보인다`,
+                    `「${criterionName}」 항목에서 기초적인 수준을 보이며 지도가 필요하다`,
                 ];
-                analysedUnits = [...analysedUnits, ...aiUnits.map(u => ({ ...u, id: 'AI' + Date.now() + Math.random(), isAI: true }))];
-                return;
             }
 
-            try {
-                // Auto-detect available model for this API key
-                let modelId = 'gemini-2.0-flash';
-                try {
-                    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`);
-                    if (listRes.ok) {
-                        const listData = await listRes.json();
-                        const models = listData.models || [];
-                        const flashModel = models.find(m =>
-                            m.name?.includes('flash') &&
-                            !m.name?.includes('thinking') &&
-                            m.supportedGenerationMethods?.includes('generateContent')
-                        );
-                        if (flashModel) modelId = flashModel.name.replace('models/', '');
-                    }
-                } catch (e) { /* use fallback modelId */ }
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${geminiApiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `다음은 교과서들에서 추출된 텍스트입니다. 전문가 수준에서 교육과정 재구성을 위한 핵심 단원과 개념을 JSON 형식으로 추출해줘. 
-                                응답은 반드시 [{ "unit": "단원명", "title": "핵심주제", "concepts": ["개념1", "개념2"], "activities": ["활동1"] }] 형식을 지켜야 하며, 다른 설명 없이 JSON 코드 블록만 출력해줘.
-                                텍스트: ${text.substring(0, 15000)}`
-                            }]
-                        }]
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || `API Error: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                    throw new Error("AI가 유효한 응답을 생성하지 못했습니다. (Safety Filter 등에 의해 차단되었을 수 있습니다)");
-                }
-
-                const responseText = data.candidates[0].content.parts[0].text;
-                const jsonMatch = responseText.match(/\[\s*\{.*\}\s*\]/s);
-
-                if (!jsonMatch) {
-                    throw new Error("AI 응답에서 JSON 형식을 찾을 수 없습니다.");
-                }
-
-                const aiResult = JSON.parse(jsonMatch[0]);
-                analysedUnits = [...analysedUnits, ...aiResult.map(u => ({ ...u, id: 'AI' + Date.now() + Math.random(), isAI: true }))];
-                statusText.innerHTML = `<span style="color: var(--success);">✨ Gemini AI 분석 완료 (NotebookLM Engine 동기화됨)</span>`;
-
-            } catch (err) {
-                console.error("Gemini API Error:", err);
-                statusText.innerHTML = `<span style="color: #ef4444;">❌ AI 분석 중 오류 발생: ${err.message}</span>`;
-                alert("AI 분석 중 오류가 발생했습니다: " + err.message + "\n기본 분석 결과만 표시합니다.");
-            }
-        }
-
-        async function processPDF(file) {
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-                let tocText = "";
-                let foundTOC = false;
-                const scanLimit = Math.min(pdf.numPages, 20); // Scan up to 20 pages for TOC
-
-                // 1. Search for TOC (Table of Contents)
-                for (let i = 1; i <= scanLimit; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(" ");
-
-                    if (pageText.includes("차례") || pageText.includes("목차") || pageText.includes("Contents")) {
-                        tocText += pageText + " ";
-                        foundTOC = true;
-                        // If TOC found, read 2 more pages to ensure full coverage
-                        for (let j = 1; j <= 2 && (i + j) <= pdf.numPages; j++) {
-                            const nextP = await pdf.getPage(i + j);
-                            const nextT = await nextP.getTextContent();
-                            tocText += nextT.items.map(it => it.str).join(" ") + " ";
-                        }
-                        break;
-                    }
-                }
-
-                // 2. If no TOC found in first 20 pages, fallback to first 5 pages for general analysis
-                if (!foundTOC) {
-                    for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        tocText += textContent.items.map(item => item.str).join(" ") + " ";
-                    }
-                }
-
-                extractedText += tocText + " ";
-                extractUnitsStructural(tocText, file.name);
-
-            } catch (err) {
-                console.error(`Error processing ${file.name}:`, err);
-            }
-        }
-
-        function extractUnitsStructural(text, fileName) {
-            const fileShortName = fileName.replace('.pdf', '');
-
-            // Regex patterns for units: "1. 제목", "I. 제목", "1단원 제목", "Lesson 1 제목"
-            const unitPatterns = [
-                /(\d+)\s*[\.\-]\s*([가-힣\s]{2,20})/g,               // 1. 제목
-                /([IVX]+)\s*[\.\-]\s*([가-힣\s]{2,20})/g,           // I. 제목
-                /(\d+)단원\s*([가-힣\s]{2,20})/g,                   // 1단원 제목
-                /Lesson\s*(\d+)\s*([A-Za-z\s]{2,30})/gi             // Lesson 1 Title
-            ];
-
-            let discovered = [];
-            unitPatterns.forEach(pattern => {
-                let match;
-                while ((match = pattern.exec(text)) !== null) {
-                    discovered.push({
-                        num: match[1],
-                        title: match[2].trim()
-                    });
+            // 루브릭 단계 수에 맞게 배분
+            rubricLevels.forEach((level, i) => {
+                const input = inputs[i + 1];
+                if (input && !input.value) { // 이미 값이 있으면 덮어쓰지 않음
+                    // 단계가 3개보다 많거나 적으면 보간
+                    if (i === 0) input.value = matched[0];
+                    else if (i === rubricLevels.length - 1) input.value = matched[Math.min(2, matched.length - 1)];
+                    else input.value = matched[1];
                 }
             });
+        });
 
-            // If patterns found nothing, fallback to keyword extraction
-            if (discovered.length === 0) {
-                const keywords = ['생태계', '환경', '기후', '에너지', '과학', '사회', '역사', '문화', '인권', '실험', '탐구', '우리', '생활'];
-                const foundKeywords = keywords.filter(k => text.includes(k));
-                if (foundKeywords.length > 0) {
-                    analysedUnits.push({
-                        id: 'DU' + Date.now() + Math.random(),
-                        unit: fileShortName,
-                        title: foundKeywords.slice(0, 2).join(' & ') + ' 관련 주제',
-                        concepts: foundKeywords.slice(0, 4),
-                        activities: []
-                    });
-                }
-            } else {
-                // Remove duplicates and push
-                const uniqueTitles = new Set();
-                discovered.forEach(d => {
-                    if (!uniqueTitles.has(d.title) && d.title.length > 2) {
-                        uniqueTitles.add(d.title);
-                        analysedUnits.push({
-                            id: 'DU' + Date.now() + Math.random(),
-                            unit: `${fileShortName} (${d.num})`,
-                            title: d.title,
-                            concepts: extractConceptsFromTitle(d.title, text),
-                            activities: extractActivitiesFromContext(d.title, text)
-                        });
-                    }
-                });
-            }
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        lucide.createIcons();
+
+        // 피드백 토스트
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed; bottom:2rem; right:2rem; background:var(--success); color:white; padding:0.8rem 1.5rem; border-radius:10px; font-size:0.9rem; z-index:9999; animation: fadeIn 0.3s ease;';
+        toast.innerText = '✅ 루브릭 세부 내용이 추천되었습니다! 직접 수정하여 완성해 보세요.';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ─────────────────────────────────────────────
+    // 7. Layer 2 → Layer 3: 평가 기반 수업 흐름 생성
+    // ─────────────────────────────────────────────
+    async function generateFlowFromAssessment() {
+        const taskDesc = document.getElementById('task-desc').value.trim();
+        if (assessmentPlan.taskTypes.length === 0) { alert('수행과제 유형을 하나 이상 선택해 주세요.'); return; }
+        if (assessmentPlan.taskTypes.includes('✏️ 직접 입력') && !assessmentPlan.customTaskType.trim()) {
+            alert('직접 입력할 수행과제 유형을 입력해 주세요.'); return;
+        }
+        if (!taskDesc) { alert('최종 수행과제 내용을 입력해 주세요.'); return; }
+
+        assessmentPlan.taskDesc = taskDesc;
+        assessmentPlan.rubric = getRubricData();
+        // 유형을 문자열로 합치기 (직접입력은 customTaskType 으로 대체)
+        const taskTypeLabel = assessmentPlan.taskTypes
+            .map(t => t === '✏️ 직접 입력' ? assessmentPlan.customTaskType : t)
+            .join(' + ');
+
+        showLoader('평가 계획을 분석하여 수업 흐름을 역방향으로 설계하고 있습니다...');
+        await new Promise(r => setTimeout(r, 1800));
+
+        // 루브릭 기반 수업 흐름 역방향 설계
+        const rubric = assessmentPlan.rubric;
+        const stageTemplates = [
+            { phase: '도입', label: '맥락 들어가기', desc: `「${currentPrompt.substring(0, 25)}...」 주제를 탐색하고 학습 방향을 설정합니다.` },
+            { phase: '탐색', label: '관련 내용 탐구', desc: '핵심 개념과 관련 자료를 분석하고 탐색합니다.' },
+            { phase: '탐색', label: '문제 상황 이해', desc: '실제 사례를 분석하고 문제를 구체적으로 파악합니다.' },
+            { phase: '심화', label: '비교·분석 활동', desc: '다양한 관점을 비교하고 논리적 근거를 구성합니다.' },
+            { phase: '심화', label: '아이디어 설계', desc: `수행과제(${taskTypeLabel})를 위한 아이디어를 설계합니다.` },
+            { phase: '제작', label: '초안 제작', desc: `${taskTypeLabel} 형식에 맞게 초안을 작성합니다.` },
+            { phase: '제작', label: '동료 피드백', desc: '루브릭 기준으로 동료의 작품을 피드백하고 수정합니다.' },
+            { phase: '제작', label: '결과물 완성', desc: `최종 ${taskTypeLabel} 결과물을 완성합니다.` },
+            { phase: '발표', label: '공유 및 발표', desc: `완성된 결과물을 발표하고 ${rubric[0]?.name || '평가 기준'}에 따라 피드백을 받습니다.` },
+            { phase: '성찰', label: '성찰 및 마무리', desc: '학습 과정을 돌아보고 성취를 확인합니다.' },
+        ];
+
+        lessonFlow = stageTemplates.map((t, i) => ({
+            id: i + 1,
+            phase: t.phase,
+            title: `${i + 1}차시: ${t.label}`,
+            desc: t.desc,
+            rubricLinks: rubric.slice(0, 2).map(r => r.name).filter(Boolean)
+        }));
+
+        // 루브릭 행이 많으면 마지막 몇 차시에 연결
+        if (rubric.length > 2) {
+            rubric.slice(2).forEach((r, i) => {
+                if (lessonFlow[5 + i]) lessonFlow[5 + i].rubricLinks.push(r.name);
+            });
         }
 
-        function extractConceptsFromTitle(title, fullText) {
-            const keywords = ['생태계', '환경', '기후', '에너지', '과학', '사회', '역사', '문화', '인권', '실험', '탐구', '우리', '생활'];
-            return keywords.filter(k => title.includes(k) || fullText.includes(k)).slice(0, 4);
-        }
+        renderFlow();
+        switchLayer(3);
+        hideLoader();
+        lucide.createIcons();
+    }
 
-        function extractActivitiesFromContext(title, fullText) {
-            const activities = ['실험', '토의', '토론', '조사', '발표', '관찰', '만들기', '체험'];
-            return activities.filter(a => fullText.includes(a)).slice(0, 3);
-        }
-
-        function renderAnalysedUnits() {
-            const container = document.getElementById('dynamic-units');
-            container.innerHTML = analysedUnits.map(unit => `
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid ${unit.isAI ? '#ec4899' : 'rgba(16, 185, 129, 0.3)'}; position: relative;">
-                    <button class="delete-btn" data-id="${unit.id}" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 1.2rem; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">&times;</button>
-                    ${unit.isAI ? '<span style="position: absolute; top: 10px; right: 35px; font-size: 0.6rem; background: #ec4899; color: white; padding: 2px 6px; border-radius: 20px;">AI Expert</span>' : ''}
-                    <p style="font-weight: 700; font-size: 0.8rem; color: ${unit.isAI ? '#ec4899' : 'var(--success)'}; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;">${unit.unit}</p>
-                    <p style="font-size: 0.9rem; margin: 5px 0;">${unit.title}</p>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                        ${unit.concepts.map(c => `<span style="font-size: 0.7rem; background: ${unit.isAI ? 'rgba(236, 72, 153, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${unit.isAI ? '#ec4899' : 'var(--success)'}; padding: 2px 6px; border-radius: 4px;">#${c}</span>`).join('')}
+    function renderFlow() {
+        const phaseColors = { '도입': '#818cf8', '탐색': '#34d399', '심화': '#f472b6', '제작': '#fbbf24', '발표': '#a78bfa', '성찰': '#60a5fa' };
+        document.getElementById('flow-board').innerHTML = lessonFlow.map(item => `
+                <div class="flow-card" id="flow-${item.id}">
+                    <div class="flow-num">
+                        <span class="n">${item.id}</span>
+                        <span class="t">차시</span>
+                    </div>
+                    <div class="flow-content">
+                        <div class="flow-info">
+                            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+                                <span style="font-size:0.7rem; padding:2px 8px; border-radius:4px; background:${phaseColors[item.phase]}22; color:${phaseColors[item.phase]}; border:1px solid ${phaseColors[item.phase]}44; font-weight:600;">${item.phase}</span>
+                                <h4 style="font-size:1rem; margin:0;">${item.title}</h4>
+                            </div>
+                            <p>${item.desc}</p>
+                            <div class="flow-tags" style="margin-top:0.6rem;">
+                                ${item.rubricLinks.map(r => `<span class="tag">📊 ${r}</span>`).join('')}
+                            </div>
+                        </div>
+                        <button class="btn-retry" onclick="retryStep(${item.id})" title="재생성">
+                            <i data-lucide="refresh-cw" style="width:18px;"></i>
+                        </button>
                     </div>
                 </div>
             `).join('');
+        lucide.createIcons();
+    }
 
-            // Bind delete events dynamically
-            container.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = e.currentTarget.getAttribute('data-id');
-                    deleteUnit(id);
-                });
-            });
-        }
+    async function retryStep(id) {
+        const card = document.querySelector(`#flow-${id} .flow-content`);
+        const info = card.querySelector('.flow-info');
+        info.innerHTML = `<div class="spinner" style="margin:10px;"></div><p style="font-size:0.8rem;">AI가 내용을 재생성 중...</p>`;
+        await new Promise(r => setTimeout(r, 1200));
+        const lesson = lessonFlow.find(l => l.id === id);
+        info.innerHTML = `
+                <h4>[수정됨] ${lesson.title}: 심화 활동 재설계</h4>
+                <p>기존 활동에서 나아가, 학생 주도적 탐구 과정을 강화하여 재구성했습니다.</p>
+                <div class="flow-tags"><span class="tag">🔄 AI재생성</span></div>
+            `;
+    }
 
-        function deleteUnit(id) {
-            if (confirm("이 분석 단원을 삭제하시겠습니까?")) {
-                analysedUnits = analysedUnits.filter(u => u.id !== id);
-                renderAnalysedUnits();
-            }
-        }
+    // ─────────────────────────────────────────────
+    // 8. Layer 3 → Layer 4: 성취기준 자동 매핑
+    // ─────────────────────────────────────────────
+    function goToStandardsMapping() {
+        lessonMappedStandards = {};
+        lessonFlow.forEach(l => { lessonMappedStandards[l.id] = []; });
+        renderLessonTabs();
+        selectLessonTab(1);
+        switchLayer(4);
+    }
 
-        function resetAnalysis() {
-            if (confirm("모든 분석 결과를 초기화하고 새로 시작하시겠습니까?")) {
-                analysedUnits = [];
-                extractedText = "";
-                document.getElementById('analysis-ready').style.display = 'none';
-                document.getElementById('file-list-container').style.display = 'none';
-                document.getElementById('file-items-list').innerHTML = '';
-                document.getElementById('drop-zone').style.display = 'block';
-                document.getElementById('processing-status').style.display = 'none';
-                document.getElementById('progress-bar').style.width = '0%';
-            }
-        }
+    function renderLessonTabs() {
+        const phaseColors = { '도입': '#818cf8', '탐색': '#34d399', '심화': '#f472b6', '제작': '#fbbf24', '발표': '#a78bfa', '성찰': '#60a5fa' };
+        document.getElementById('lesson-tab-list').innerHTML = lessonFlow.map(l => `
+                <div id="tab-${l.id}" onclick="selectLessonTab(${l.id})" style="cursor:pointer; padding:0.7rem 1rem; border-radius:10px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.03); transition:0.2s;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <span style="font-size:0.65rem; padding:1px 6px; border-radius:3px; background:${phaseColors[l.phase]}22; color:${phaseColors[l.phase]};">${l.phase}</span>
+                        <span style="font-size:0.85rem; font-weight:600;">${l.id}차시</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">${l.title.split(': ')[1] || ''}</div>
+                    <div id="tab-badge-${l.id}" style="font-size:0.7rem; color:var(--success); margin-top:3px; display:none;">✓ 매핑 완료</div>
+                </div>
+            `).join('');
+    }
 
-        // Global Filter State
-        let currentFilter = { grade: null, subject: null };
+    function selectLessonTab(lessonId) {
+        selectedLessonIdx = lessonId;
+        document.querySelectorAll('#lesson-tab-list > div').forEach(t => {
+            t.style.background = 'rgba(255,255,255,0.03)';
+            t.style.borderColor = 'var(--glass-border)';
+        });
+        const activeTab = document.getElementById(`tab-${lessonId}`);
+        activeTab.style.background = 'rgba(99,102,241,0.15)';
+        activeTab.style.borderColor = 'var(--primary)';
+        renderMappingPanel(lessonId);
+    }
 
-        function buildCurriculumTree() {
-            const treeRoot = document.getElementById('curriculum-tree-root');
-            const treeContainer = document.getElementById('curriculum-tree-container');
+    function renderMappingPanel(lessonId) {
+        const lesson = lessonFlow.find(l => l.id === lessonId);
+        const mapped = lessonMappedStandards[lessonId] || [];
 
-            if (curriculumDB.length === 0) {
-                treeContainer.style.display = 'none';
-                return;
-            }
+        // 관련 성취기준 추천: 선택된 교과 + lesson keyword matching
+        const lessonKeywords = lesson.title.split(/\s+/).concat(lesson.desc.split(/\s+/));
+        const recommended = curriculumDB.filter(db => {
+            if (!selectedSubjects.includes(db.subject)) return false;
+            return lessonKeywords.some(kw => kw.length > 1 && db.content.includes(kw));
+        }).slice(0, 6);
 
-            treeContainer.style.display = 'block';
+        // 나머지 전체
+        const others = curriculumDB.filter(db =>
+            selectedSubjects.includes(db.subject) && !recommended.some(r => r.id === db.id)
+        );
 
-            // Extract grades and subjects
-            const treeMap = new Map();
-            curriculumDB.forEach(item => {
-                const gradeMatch = item.code.match(/\[?(\d{1,2})/);
-                let gradeName = gradeMatch ? `${gradeMatch[1]}학년` : '공통/기타';
-                if (item.code.includes('[-]')) gradeName = '공통/기타';
+        document.getElementById('mapping-panel').innerHTML = `
+                <div style="font-weight:700; font-size:1rem; margin-bottom:1.2rem;">
+                    📌 ${lesson.title}
+                    <span style="font-size:0.8rem; color:var(--text-dim); font-weight:400; display:block; margin-top:0.3rem;">${lesson.desc}</span>
+                </div>
 
-                if (!treeMap.has(gradeName)) {
-                    treeMap.set(gradeName, new Map());
-                }
-                const subjectMap = treeMap.get(gradeName);
-                if (!subjectMap.has(item.subject)) {
-                    subjectMap.set(item.subject, 1);
-                } else {
-                    subjectMap.set(item.subject, subjectMap.get(item.subject) + 1);
-                }
-            });
+                ${mapped.length > 0 ? `
+                <div style="margin-bottom:1.2rem; padding:1rem; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:12px;">
+                    <div style="font-size:0.85rem; font-weight:600; color:var(--success); margin-bottom:0.5rem;">✓ 선택된 성취기준 (${mapped.length}개)</div>
+                    ${mapped.map(id => {
+            const s = curriculumDB.find(d => d.id === id);
+            return s ? `<div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.3rem;"><strong style="color:var(--primary-light);">${s.code}</strong> ${s.content.substring(0, 40)}...</div>` : '';
+        }).join('')}
+                </div>` : ''}
 
-            // Sort grades numerically if possible
-            const sortedGrades = Array.from(treeMap.keys()).sort((a, b) => {
-                const numA = parseInt(a) || 99;
-                const numB = parseInt(b) || 99;
-                return numA - numB;
-            });
+                <div style="font-size:0.85rem; font-weight:600; color:var(--primary-light); margin-bottom:0.7rem;">🤖 AI 추천 성취기준</div>
+                <div style="display:flex; flex-direction:column; gap:0.6rem; max-height:260px; overflow-y:auto; margin-bottom:1.2rem;">
+                    ${recommended.length > 0 ? recommended.map(s => createMappingItem(s, mapped.includes(s.id))).join('') :
+                '<div style="color:var(--text-dim); font-size:0.85rem;">이 차시와 직접 연계되는 성취기준이 없습니다. 아래 목록에서 직접 선택해 주세요.</div>'}
+                </div>
 
-            let html = '';
-            sortedGrades.forEach(grade => {
-                let subjectHtml = '';
-                const subjectMap = treeMap.get(grade);
-                const sortedSubjects = Array.from(subjectMap.entries()).sort((a, b) => b[1] - a[1]); // sort by count desc
-
-                sortedSubjects.forEach(([subject, count]) => {
-                    subjectHtml += `<div class="tree-subject-item" data-grade="${grade}" data-subject="${subject}" onclick="filterCurriculum('${grade}', '${subject}')">${subject} <span style="opacity: 0.6; font-size: 0.8rem;">(${count})</span></div>`;
-                });
-
-                html += `
-                <details open class="tree-grade">
-                    <summary>${grade}</summary>
-                    <div class="tree-subjects">
-                        ${subjectHtml}
+                <details style="margin-top:0.5rem;">
+                    <summary style="cursor:pointer; font-size:0.85rem; color:var(--text-dim); font-weight:600; margin-bottom:0.7rem;">전체 성취기준 목록 (${others.length}개) 보기/숨기기</summary>
+                    <div style="display:flex; flex-direction:column; gap:0.6rem; max-height:300px; overflow-y:auto; margin-top:0.7rem;">
+                        ${others.map(s => createMappingItem(s, mapped.includes(s.id))).join('')}
                     </div>
                 </details>
-                `;
-            });
+            `;
+        lucide.createIcons();
+    }
 
-            treeRoot.innerHTML = html;
-        }
+    function createMappingItem(s, isSelected) {
+        return `
+                <div onclick="toggleMapping(${selectedLessonIdx}, ${s.id})" style="cursor:pointer; padding:0.8rem 1rem; border-radius:10px; border:1px solid ${isSelected ? 'var(--primary)' : 'var(--glass-border)'}; background:${isSelected ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.03)'}; transition:0.2s; display:flex; gap:0.8rem; align-items:flex-start;">
+                    <div style="margin-top:2px; color:${isSelected ? 'var(--primary-light)' : 'var(--glass-border)'}; flex-shrink:0;">
+                        <i data-lucide="${isSelected ? 'check-circle-2' : 'circle'}" style="width:16px;"></i>
+                    </div>
+                    <div>
+                        <span style="font-size:0.72rem; font-weight:700; color:var(--primary-light);">[${s.subject}] ${s.code}</span>
+                        <p style="font-size:0.82rem; color:var(--text); line-height:1.4; margin-top:2px;">${s.content}</p>
+                    </div>
+                </div>
+            `;
+    }
 
-        function filterCurriculum(grade, subject) {
-            currentFilter.grade = grade && grade.replace('학년', '');
-            currentFilter.subject = subject;
+    function toggleMapping(lessonId, standardId) {
+        const arr = lessonMappedStandards[lessonId];
+        const idx = arr.indexOf(standardId);
+        if (idx > -1) arr.splice(idx, 1);
+        else arr.push(standardId);
 
-            // Update active styles
-            document.querySelectorAll('.tree-subject-item').forEach(el => {
-                if (grade === null) {
-                    el.classList.remove('active');
-                } else {
-                    if (el.getAttribute('data-grade') === grade && el.getAttribute('data-subject') === subject) {
-                        el.classList.add('active');
-                    } else {
-                        el.classList.remove('active');
-                    }
-                }
-            });
+        // 탭 뱃지 업데이트
+        const badge = document.getElementById(`tab-badge-${lessonId}`);
+        badge.style.display = arr.length > 0 ? 'block' : 'none';
 
-            renderMappingItems();
-        }
-
-        // Layer 2 Routing
-        function renderMappingItems() {
-            const cList = document.getElementById('curriculum-list');
-            const tList = document.getElementById('textbook-list');
-
-            if (curriculumDB.length > 0) {
-                // Apply Filters (Tree Filter + Search Keyword)
-                const filteredDB = curriculumDB.filter(item => {
-                    // 1. Tree Filter Check
-                    let passTree = true;
-                    if (currentFilter.grade || currentFilter.subject) {
-                        const itemGradeMatch = item.code.match(/\[?(\d{1,2})/);
-                        let itemGrade = itemGradeMatch ? itemGradeMatch[1] : '공통/기타';
-                        if (item.code.includes('[-]')) itemGrade = '공통/기타';
-
-                        if (currentFilter.grade && currentFilter.grade !== '공통/기타' && itemGrade !== currentFilter.grade) passTree = false;
-                        if (currentFilter.grade === '공통/기타' && itemGrade !== '공통/기타') passTree = false;
-                        if (currentFilter.subject && item.subject !== currentFilter.subject) passTree = false;
-                    }
-
-                    // 2. Search Keyword Check (Case-insensitive)
-                    let passSearch = true;
-                    if (currentSearchKeyword) {
-                        const lowK = currentSearchKeyword.toLowerCase();
-                        passSearch = item.content.toLowerCase().includes(lowK) ||
-                            item.code.toLowerCase().includes(lowK) ||
-                            item.subject.toLowerCase().includes(lowK);
-                    }
-
-                    return passTree && passSearch;
-                });
-
-                if (filteredDB.length === 0) {
-                    cList.innerHTML = `<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; margin-top: 2rem;">선택한 필터/검색 조건에 해당하는 성취기준이 없습니다.</p>`;
-                } else {
-                    cList.innerHTML = filteredDB.map(item => `
-                        <div class="item-card" onclick="toggleSelection(this, 'c')">
-                            <span class="tag tag-info" style="margin-bottom: 8px; display: inline-block;">${item.subject}</span>
-                            <p style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">${item.code}</p>
-                            <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.4;">${item.content}</p>
-                        </div>
-                    `).join('');
-                }
-            } else {
-                cList.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem; text-align: center; margin-top: 2rem; background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 8px; border: 1px dashed rgba(239, 68, 68, 0.3);">업로드된 성취기준 데이터가 없습니다.<br><strong style="color: var(--primary-light);">Layer 1에서 교육과정 DB를 먼저 세팅해 주세요.</strong></p>`;
-            }
-
-            // Apply Keyword Filter to Textbook list as well
-            if (analysedUnits.length > 0) {
-                const filteredUnits = !currentSearchKeyword ? analysedUnits : analysedUnits.filter(unit =>
-                    unit.title.toLowerCase().includes(currentSearchKeyword.toLowerCase()) ||
-                    unit.unit.toLowerCase().includes(currentSearchKeyword.toLowerCase()) ||
-                    unit.concepts.some(c => c.toLowerCase().includes(currentSearchKeyword.toLowerCase()))
-                );
-
-                if (filteredUnits.length === 0) {
-                    tList.innerHTML = `<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; margin-top: 2rem;">검색어와 일치하는 단원이 없습니다.</p>`;
-                } else {
-                    tList.innerHTML = filteredUnits.map(item => `
-                        <div class="item-card" onclick="toggleSelection(this, 't')">
-                            <p style="font-weight: 600; font-size: 0.85rem; color: var(--accent); margin-bottom: 4px;">${item.unit}</p>
-                            <p style="font-size: 0.9rem; color: var(--text); margin-bottom: 8px;">${item.title}</p>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                ${item.concepts.map(c => `<span style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">#${c}</span>`).join('')}
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } else {
-                tList.innerHTML = `<p id="mapping-placeholder" style="color: var(--text-dim); font-size: 0.9rem; text-align: center; margin-top: 2rem;">먼저 Layer 1에서 PDF 분석을 완료해 주세요.</p>`;
-            }
-        }
-
-        function toggleSelection(el, type) {
-            el.classList.toggle('selected');
-            checkGaps();
-        }
-
-        function checkGaps() {
-            const gapCard = document.getElementById('gap-check-card');
-            const gapMsg = document.getElementById('gap-message');
-
-            const selectedC = document.querySelectorAll('#curriculum-list .item-card.selected').length;
-            const selectedT = document.querySelectorAll('#textbook-list .item-card.selected').length;
-
-            if (selectedC > 0 && selectedT === 0) {
-                gapCard.style.display = 'block';
-                gapCard.style.borderLeftColor = 'var(--warning)';
-                gapMsg.style.color = 'var(--text)';
-                gapMsg.innerText = '⚠️ 알림: 성취기준은 선택되었으나 이를 구현할 통합 교과서 데이터가 매핑되지 않았습니다.';
-            } else if (selectedC > 0 && selectedT > 0) {
-                gapCard.style.display = 'block';
-                gapCard.style.borderLeftColor = 'var(--success)';
-                gapMsg.style.color = 'var(--success)';
-                gapMsg.innerText = '✅ 검증 완료: 통합 분석된 여러 교과서 단원들이 성취기준과 성공적으로 연결되었습니다.';
-            } else {
-                gapCard.style.display = 'none';
-            }
-        }
-
-        function startMapping() {
-            const topicInput = document.getElementById('reconstruction-topic');
-            currentSearchKeyword = topicInput.value.trim();
-            console.log("Mapping started for topic/keyword:", currentSearchKeyword);
-            renderMappingItems();
-        }
-
-        // Drag and Drop
-        const dropZone = document.getElementById('drop-zone');
-
-        // Initial Binding (Immediate since script is at the end)
-        const rb = document.getElementById('reset-analysis-btn');
-        if (rb) rb.addEventListener('click', resetAnalysis);
-        const mb = document.getElementById('open-map-btn');
-        if (mb) mb.addEventListener('click', openConceptMap);
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, e => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-
-        dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => {
-            dropZone.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files).filter(f => f.type === "application/pdf");
-            if (files.length > 0) {
-                processMultipleFiles(files);
-            }
-        });
-    </script>
+        renderMappingPanel(lessonId);
+    }
+</script>
 </body>
 
 </html>

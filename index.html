@@ -914,14 +914,22 @@
         // ═══════════════════════════════════════
         const GEMINI_API_KEY = "YOUR_API_KEY_HERE";
         let local_GEMINI_API_KEY = localStorage.getItem('GEMINI_API_KEY') || "";
-        const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+        let local_OLLAMA_MODEL = localStorage.getItem('OLLAMA_MODEL') || "gemma4:e4b";
+        const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
         window.setAPIKey = function () {
             const key = prompt("Gemini API Key를 입력하세요 (빈 칸 설정 시 Mock 데모 작동):", local_GEMINI_API_KEY);
             if (key !== null) {
                 local_GEMINI_API_KEY = key.trim();
                 localStorage.setItem('GEMINI_API_KEY', local_GEMINI_API_KEY);
-                alert('API Key가 성공적으로 저장되었습니다!');
+
+                const ollamaModel = prompt("로컬 Ollama 사용할 모델 이름을 입력하세요:", local_OLLAMA_MODEL);
+                if (ollamaModel !== null && ollamaModel.trim() !== '') {
+                    local_OLLAMA_MODEL = ollamaModel.trim();
+                    localStorage.setItem('OLLAMA_MODEL', local_OLLAMA_MODEL);
+                }
+
+                alert('설정이 성공적으로 저장되었습니다!');
             }
         };
 
@@ -964,26 +972,22 @@
             };
 
             const body = {
-                model: "gemma",
+                model: local_OLLAMA_MODEL,
                 prompt: prompts[taskType],
                 stream: false
             };
 
             try {
                 const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-                if (!response.ok) throw new Error("Local endpoint not responding");
+                if (!response.ok) throw new Error("Ollama 로컬 서버(localhost:11434)에 연결할 수 없거나 Gemma 모델이 실행되지 않았습니다.");
                 const data = await response.json();
 
                 // 마크다운 흔적 지우기 (Gemma가 가끔 마크다운 백틱을 넣을 수 있음)
                 let cleaned = data.response.replace(/```json/gi, '').replace(/```/g, '').trim();
                 return { result: cleaned };
             } catch (e) {
-                console.warn("Local Gemma failed. Mock 응답으로 대체.", e);
-                if (taskType === 'RECOMMEND_EU' || taskType === 'SHORT_GEN') return { result: "AI 추천 영속적 이해 문장: 학생들은 문제의 본질을 파악하고 창의적인 해결책을 고안할 수 있다." };
-                if (taskType === 'RECOMMEND_EQ') return { result: '["우리가 직면한 가장 큰 문제는?", "어떻게 이를 해결할까?", "왜 이 문제가 중요할까?"]' };
-                if (taskType === 'RECOMMEND_KSA' || taskType === 'TAG_EXTRACT') return { result: '{"knowledge":["핵심개념","문제상황"],"skill":["이해할수있다","토론할수있다"]}' };
-                if (taskType === 'RETRY_STEP') return { result: "[AI 수정본] 학생 스스로 자료를 탐색하고 논의하는 탐구 활동 진행." };
-                return { result: "" };
+                console.error("Local Gemma failed:", e);
+                throw new Error("무료 AI(Gemma) 연결 실패: Ollama 서버가 켜져 있는지 확인하세요. (" + e.message + ")");
             }
         }
 
@@ -1044,7 +1048,9 @@
             };
             const { prompt, schema } = configs[taskType];
 
-            if (GEMINI_API_KEY === "YOUR_API_KEY_HERE" || !GEMINI_API_KEY) {
+            const apiKeyToUse = local_GEMINI_API_KEY;
+
+            if (apiKeyToUse === "YOUR_API_KEY_HERE" || !apiKeyToUse) {
                 console.warn("No Gemini API key provided. Using Mock.");
                 await new Promise(r => setTimeout(r, 1500));
                 if (taskType === 'RUBRIC') return { "내용의 정확성": { "상": "명확함", "중": "보통", "하": "부족" }, "독창적 표현": { "상": "매우 독창적", "중": "보통", "하": "관습적" } };
@@ -1057,7 +1063,7 @@
                 generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json", responseSchema: schema }
             };
 
-            const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
+            const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKeyToUse}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
             const result = await response.json();
             if (result.error) throw new Error(result.error.message);
             return JSON.parse(result.candidates[0].content.parts[0].text);

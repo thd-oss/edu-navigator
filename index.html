@@ -1001,32 +1001,42 @@
             const ksaBlock = (payload.ku || payload.su) ? `\n- 기작성된 지식/기능: ${payload.ku} / ${payload.su}` : "";
             const contextText = stdBlock + topicBlock + euBlock + eqBlock + ksaBlock;
 
-            const persona = "당신은 한국의 15년 차 수석 교사이자 교육과정 재구성 전문가입니다. ";
+            const persona = "당신은 한국의 15년 차 수석 교사이자 백워드 설계(UbD) 전문가입니다. ";
+
             const configs = {
                 RECOMMEND_EU: {
-                    prompt: `${persona}다음 교육과정 맥락을 깊이 분석하여, 이번 단원을 관통하는 철학적이고 핵심적인 '영속적 이해(Enduring Understanding)'를 1문장으로 제안해 줘. 반드시 '학생들은 ~을(를) 이해하게 될 것이다.' 형태로 작성하고 부가 설명은 생략해.\n[맥락 정보]:${contextText}`,
+                    prompt: `${persona}다음 교육과정 맥락을 깊이 분석하여, 이번 단원을 관통하는 철학적이고 핵심적인 '영속적 이해(Enduring Understanding)'를 1문장으로 제안해 줘. 반드시 '학생들은 ~을 이해하게 될 것이다' 형태로 작성해.\n[맥락 정보]:${contextText}`,
                     schema: { type: "object", properties: { eu_text: { type: "string" } }, required: ["eu_text"] }
                 },
                 RECOMMEND_EQ: {
-                    prompt: `${persona}다음 교육과정 맥락 정보를 최대한 상호 참조하여, 학생의 사고를 근본적으로 확장시킬 탐구적 '본질적 질문(Essential Questions)' 3가지를 제안해 줘. 부가 설명 없이 학생용 질문만 도출해.\n[맥락 정보]:${contextText}`,
+                    prompt: `${persona}다음 교육과정 맥락 정보를 최대한 상호 참조하여, 단답형으로 끝나지 않고 학생의 사고를 근본적으로 확장시킬 수 있는 논쟁적이고 탐구적인 '본질적 질문(Essential Questions)' 3가지를 제안해 줘.\n[맥락 정보]:${contextText}`,
                     schema: { type: "array", items: { type: "string" } }
                 },
                 RECOMMEND_KSA: {
-                    prompt: `${persona}다음 맥락 정보를 종합 분석하여, 학생들이 이 성취기준과 주제를 달성하기 위해 반드시 습득해야 하는 '지식(명사형)'과 '기능(할 수 있는 활동 동사형)'을 각각 추출해 줘.\n[맥락 정보]:${contextText}`,
+                    prompt: `${persona}다음 맥락 정보를 종합 분석하여, 학생들이 이 성취기준과 주제를 달성하기 위해 반드시 알아야 하는 '지식(명사형)'과 할 수 있어야 하는 '기능(활동/사고 동사형)'을 각각 3~5개씩 추출해 줘.\n[맥락 정보]:${contextText}`,
                     schema: { type: "object", properties: { knowledge: { type: "array", items: { type: "string" } }, skill: { type: "array", items: { type: "string" } } }, required: ["knowledge", "skill"] }
                 },
                 COMPLEX_PLANNING: {
-                    prompt: `${persona}제공된 교육과정 목표와 평가 계획을 달성할 수 있도록 WHERETO 원리에 맞춰 10차시 분량의 수업 흐름을 설계해 줘. 각 차시 객체 정보에 rubricLinks 리스트(어떤 루브릭 기준을 적용할지 문자열)도 포함해라.`,
+                    prompt: `${persona}제공된 목표와 평가 계획을 달성할 수 있도록 10차시 분량의 수업 흐름을 설계해 줘. 
+설계 시 반드시 다음 'WHERETO' 원리를 각 차시의 성격에 맞게 적절히 분배하여(whereto 속성 배열에 태그 삽입) 구성해라:
+- W: 방향과 목적 설정
+- H: 흥미 유발 및 유지
+- E: 경험, 탐구, 장비 부여
+- R: 재고, 수정, 반성
+- E: 작품 및 과정에 대한 평가
+- T: 개별화 (학생 수준에 맞춘 조정)
+- O: 효과적인 조직화
+또한 각 차시 객체 정보에 해당 차시 활동이 어떤 루브릭 평가 기준과 연결되는지(rubricLinks)를 명시해라.`,
                     schema: {
                         type: "array",
                         items: {
                             type: "object",
                             properties: {
                                 id: { type: "integer" },
-                                phase: { type: "string" },
-                                title: { type: "string" },
-                                desc: { type: "string" },
-                                whereto: { type: "array", items: { type: "string" } },
+                                phase: { type: "string", description: "예: 도입, 탐색, 심화, 제작, 발표, 성찰" },
+                                title: { type: "string", description: "예: 1차시: 환경 문제의 심각성 깨닫기" },
+                                desc: { type: "string", description: "해당 차시의 구체적인 학생 주도적 학습 활동 설명" },
+                                whereto: { type: "array", items: { type: "string", enum: ["W", "H", "E", "R", "E₂", "T", "O"] } },
                                 rubricLinks: { type: "array", items: { type: "string" } }
                             },
                             required: ["id", "phase", "title", "desc", "whereto", "rubricLinks"]
@@ -1034,7 +1044,8 @@
                     }
                 },
                 RUBRIC: {
-                    prompt: `${persona}GRASPS 시나리오를 바탕으로 루브릭의 상/중/하 평가 기준을 작성해 줘. {"평가항목명": {"상":"...","중":"...","하":"..."}} 모양으로 응답해라.`,
+                    prompt: `${persona}제공된 GRASPS(Goal, Role, Audience, Situation, Product, Standards) 시나리오 맥락을 바탕으로, 최종 결과물(Product)을 평가할 루브릭의 상/중/하 세부 평가 기준을 작성해 줘.
+각 항목에 대해 추상적인 표현(예: "잘한다")을 피하고, 결과물이나 수행에 드러나야 할 구체적인 관찰 가능 행동이나 증거를 서술해라.`,
                     schema: {
                         type: "object",
                         additionalProperties: {
@@ -1045,7 +1056,7 @@
                     }
                 },
                 IEP_GEN: {
-                    prompt: `${persona}이 활동을 수행하기 어려운 특수교육대상자나 학습 부진 학생을 위해 난이도를 조절한 단계를 나눈 스캐폴딩(대체 활동)을 2문장으로 제안해 줘.`,
+                    prompt: `${persona}이 활동을 독자적으로 수행하기 어려운 특수교육대상자나 기초학력 부진 학생(보편적 학습설계 관점)을 위해, 학습 목표는 유지하되 접근 방식을 달리하거나 난이도를 조절한 스캐폴딩(수정/대체 활동)을 2문장으로 구체적으로 제안해 줘.`,
                     schema: { type: "array", items: { type: "string" } }
                 }
             };

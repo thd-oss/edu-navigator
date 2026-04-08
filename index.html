@@ -7,10 +7,12 @@
     <title>Edu-Navigator | UbD 백워드 설계 코파일럿</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
     </script>
     <style>
         :root {
@@ -1129,14 +1131,27 @@
         // ═══════════════════════════════════════
         function handleFileUpload(input) {
             const file = input.files[0]; if (!file) return;
+            // 동일 파일 재업로드 허용
+            input.value = '';
             const statusEl = document.getElementById('file-status');
-            statusEl.innerText = '파일 분석 중...'; statusEl.style.color = 'var(--primary-light)';
+            statusEl.innerText = `'${file.name}' 분석 중...`; statusEl.style.color = 'var(--primary-light)';
+            console.log('[Upload] 파일 선택됨:', file.name, file.size, 'bytes');
+
+            // 필수 라이브러리 로드 확인
+            if (typeof XLSX === 'undefined') {
+                statusEl.innerText = '❌ 오류: XLSX 라이브러리가 로드되지 않았습니다. 인터넷 연결을 확인하세요.';
+                statusEl.style.color = 'var(--warning)';
+                alert('XLSX 라이브러리 로드에 실패했습니다.\n\n인터넷 연결 상태를 확인하거나 페이지를 새로고침해 주세요.');
+                return;
+            }
+
             const reader = new FileReader(); const ext = file.name.split('.').pop().toLowerCase();
             reader.onload = async function (e) {
                 const data = e.target.result;
                 try {
                     let encLabel = ext.toUpperCase();
                     curriculumDB = [];
+
 
                     if (ext === 'pdf') {
                         const typedarray = new Uint8Array(data);
@@ -1221,6 +1236,13 @@
                     }
 
                     // 파일 업로드 성공 후: 성취기준 동적 추출 및 교과 필터버튼 렌더링
+                    if (curriculumDB.length === 0) {
+                        statusEl.innerText = '오류: 파일에서 성취기준 데이터를 찾지 못했습니다. 컬럼 형식(과목, 성취기준코드, 내용 등)을 확인해 주세요.';
+                        statusEl.style.color = 'var(--warning)';
+                        alert('파일은 열렸지만 성취기준 내용을 추출하지 못했습니다.\n\n파일에 \'과목\',\'성취기준\',\'내용\' 등의 컬럼 헤더가 있는지 확인해 주세요.\n\nCSV/Excel 파일의 경우 첫 번째 시트를, TXT의 경우 줄바꿈으로 구분된 형식을 권장합니다.');
+                        return;
+                    }
+
                     const uniqueSubjects = [...new Set(curriculumDB.map(s => s.subject))].filter(Boolean);
                     openTreeNodes.clear(); // Reset open nodes on new upload
                     if (uniqueSubjects.length > 0) {
@@ -1235,11 +1257,16 @@
                         }
                     }
 
-                    statusEl.innerText = `성공: ${curriculumDB.length}개 로드됨 (${encLabel})`;
+                    statusEl.innerText = `✅ 성공: ${curriculumDB.length}개 성취기준 로드됨 (${encLabel})`;
                     statusEl.style.color = 'var(--success)';
                     showPreview(); renderStandardsList();
                     lucide.createIcons();
-                } catch (err) { console.error(err); statusEl.innerText = '오류: 파일 파싱에 실패했습니다.'; statusEl.style.color = 'var(--warning)'; }
+                } catch (err) {
+                    console.error('[Upload] 파싱 오류:', err);
+                    statusEl.innerText = `❌ 오류: ${err.message || '파일 파싱에 실패했습니다.'}`;
+                    statusEl.style.color = 'var(--warning)';
+                    alert('파일 파싱 중 오류가 발생했습니다.\n\n' + (err.message || err));
+                }
             };
             reader.readAsArrayBuffer(file);
         }

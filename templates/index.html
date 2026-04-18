@@ -1421,6 +1421,31 @@
             });
         }
 
+        function addLessonManually() {
+            const nextId = lessonFlow.length > 0 ? Math.max(...lessonFlow.map(l => l.id)) + 1 : 1;
+            const newLesson = {
+                id: nextId,
+                phase: "도입",
+                title: "새 차시 제목을 입력하세요",
+                desc: "수업 상세 내용을 입력하세요.",
+                whereto: ["W"],
+                rubricLinks: []
+            };
+            lessonFlow.push(newLesson);
+            renderFlow();
+            saveAppState();
+            showToast('✅ 새 차시가 추가되었습니다.');
+        }
+
+        function deleteLesson(id) {
+            showConfirmModal('차시 삭제', `${id}차시를 정말 삭제하시겠습니까?`, () => {
+                lessonFlow = lessonFlow.filter(l => l.id !== id);
+                renderFlow();
+                saveAppState();
+                showToast(`🗑️ ${id}차시가 삭제되었습니다.`);
+            });
+        }
+
         // [로컬 최적화] 통합 AI API 게이트웨이 함수 (타임아웃 및 안정성 강화)
         async function requestAIAction(taskType, payload, engine = 'local', btnId = null) {
             console.log(`[AI 요청] Type: ${taskType}, Engine: ${engine}, Model: ${local_OLLAMA_MODEL}`);

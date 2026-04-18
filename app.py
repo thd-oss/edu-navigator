@@ -379,7 +379,7 @@ def get_schema(task_type):
                     "보통": {"type": "string"},
                     "노력요함": {"type": "string"}
                 },
-                "required": ["항목명", "매우잘함", "잘함", "보통", "노력요하"]
+                "required": ["항목명", "매우잘함", "잘함", "보통", "노력요함"]
             }
         }
     return {"type": "object"}

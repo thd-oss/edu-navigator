@@ -910,6 +910,7 @@
         let assessmentPlan = { grasps: {}, taskTypes: [], customTaskType: '', rubric: [] };
         let lessonFlow = [];
         let iepData = {}; // key: lessonId, value: text
+        let rubricLevels = ['상 (탁월)', '중 (적절)', '하 (기초)'];
 
         // ═══════════════════════════════════════
         // 1.5 하이브리드 AI 게이트웨이 (Gemma + Gemini)
@@ -987,7 +988,7 @@
                 const data = await response.json();
 
                 // 마크다운 흔적 지우기 (Gemma가 가끔 마크다운 백틱을 넣을 수 있음)
-                let cleaned = data.response.replace(/```json / gi, '').replace(/```/g, '').trim();
+                let cleaned = data.response.replace(/```json /gi, '').replace(/```/g, '').trim();
                 return { result: cleaned };
             } catch (e) {
                 console.error("Local Gemma failed:", e);
@@ -1019,16 +1020,7 @@
                     schema: { type: "object", properties: { knowledge: { type: "array", items: { type: "string" } }, skill: { type: "array", items: { type: "string" } } }, required: ["knowledge", "skill"] }
                 },
                 COMPLEX_PLANNING: {
-                    prompt: `${persona}제공된 목표와 평가 계획을 달성할 수 있도록 10차시 분량의 수업 흐름을 설계해 줘. 
-설계 시 반드시 다음 'WHERETO' 원리를 각 차시의 성격에 맞게 적절히 분배하여(whereto 속성 배열에 태그 삽입) 구성해라:
-- W: 방향과 목적 설정
-- H: 흥미 유발 및 유지
-- E: 경험, 탐구, 장비 부여
-- R: 재고, 수정, 반성
-- E: 작품 및 과정에 대한 평가
-- T: 개별화 (학생 수준에 맞춘 조정)
-- O: 효과적인 조직화
-또한 각 차시 객체 정보에 해당 차시 활동이 어떤 루브릭 평가 기준과 연결되는지(rubricLinks)를 명시해라.`,
+                    prompt: `${persona}제공된 목표와 평가 계획을 달성할 수 있도록 10차시 분량의 수업 흐름을 설계해 줘.\n설계 시 반드시 다음 'WHERETO' 원리를 각 차시의 성격에 맞게 적절히 분배하여(whereto 속성 배열에 태그 삽입) 구성해라:\n- W: 방향과 목적 설정\n- H: 흥미 유발 및 유지\n- E: 경험, 탐구, 장비 부여\n- R: 재고, 수정, 반성\n- E: 작품 및 과정에 대한 평가\n- T: 개별화 (학생 수준에 맞춘 조정)\n- O: 효과적인 조직화\n또한 각 차시 객체 정보에 해당 차시 활동이 어떤 루브릭 평가 기준과 연결되는지(rubricLinks)를 명시해라.`,
                     schema: {
                         type: "array",
                         items: {
@@ -1046,8 +1038,7 @@
                     }
                 },
                 RUBRIC: {
-                    prompt: `${persona}제공된 GRASPS(Goal, Role, Audience, Situation, Product, Standards) 시나리오 맥락을 바탕으로, 최종 결과물(Product)을 평가할 루브릭의 상/중/하 세부 평가 기준을 작성해 줘.
-각 항목에 대해 추상적인 표현(예: "잘한다")을 피하고, 결과물이나 수행에 드러나야 할 구체적인 관찰 가능 행동이나 증거를 서술해라.`,
+                    prompt: `${persona}제공된 GRASPS(Goal, Role, Audience, Situation, Product, Standards) 시나리오 맥락을 바탕으로, 최종 결과물(Product)을 평가할 루브릭의 상/중/하 세부 평가 기준을 작성해 줘.\n각 항목에 대해 추상적인 표현(예: "잘한다")을 피하고, 결과물이나 수행에 드러나야 할 구체적인 관찰 가능 행동이나 증거를 서술해라.`,
                     schema: {
                         type: "object",
                         additionalProperties: {
@@ -1604,10 +1595,8 @@
             cw.style.display = has ? 'block' : 'none'; if (!has) assessmentPlan.customTaskType = '';
         }
 
-        // ═══════════════════════════════════════
         // 10. 루브릭 빌더 (단계 편집 가능)
         // ═══════════════════════════════════════
-        let rubricLevels = ['상 (탁월)', '중 (적절)', '하 (기초)'];
         function renderRubricHeader() {
             let header = document.getElementById('rubric-header');
             const builder = document.getElementById('rubric-builder');

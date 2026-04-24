@@ -2507,7 +2507,13 @@
 
             showLoader("보고서 형식의 PDF 문서를 정밀하게 생성 중입니다. 잠시만 기다려 주세요...");
 
-            // 1. 데이터 동적 렌더링
+            // 1. 원본 템플릿에 데이터 동적 렌더링
+            const safeTitle = (currentPrompt || 'Edu_Navigator')
+                .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
+                .trim()
+                .replace(/\s+/g, '_')
+                .substring(0, 20);
+
             document.getElementById('pdf-title').innerText = currentPrompt || 'Edu-Navigator 교육과정 설계서';
             document.getElementById('pdf-eu').innerText = ubdGoals.enduringUnderstanding || '-';
 
@@ -2560,13 +2566,20 @@
                 flowBody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; border:1px solid #cbd5e1; color:#64748b;">작성된 수업 흐름이 없습니다.</td></tr>';
             }
 
-            // 2. PDF 내보내기 옵션 설정
-            const safeTitle = (currentPrompt || 'Edu_Navigator')
-                .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
-                .trim()
-                .replace(/\s+/g, '_')
-                .substring(0, 20);
+            // 2. 가상 복제본(Clone) 생성 및 스타일 강제화 (가장 확실한 렌더링 방식)
+            const clone = template.cloneNode(true);
+            clone.id = 'pdf-clone-temp';
+            clone.style.display = 'block';
+            clone.style.position = 'relative'; // 표준 흐름 내 배치
+            clone.style.visibility = 'visible';
+            clone.style.width = '190mm'; // A4 실효 너비 강제 고정
+            clone.style.zIndex = '-1'; // 보이지 않는 곳에 배치
+            clone.style.margin = '0 auto';
+            clone.style.overflow = 'visible';
+            clone.style.height = 'auto';
+            document.body.appendChild(clone);
 
+            // 3. PDF 내보내기 옵션 및 실행
             const opt = {
                 margin: [15, 15, 15, 15], // 상하좌우 15mm 여백 고정
                 filename: `${safeTitle}_설계서.pdf`,
@@ -2575,8 +2588,7 @@
                     scale: 2,
                     useCORS: true,
                     logging: false,
-                    scrollY: 0,
-                    windowWidth: 1000 // 충분한 가상 너비 확보
+                    scrollY: 0 // 스크롤 위치로 인한 좌표 오류 방지
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -2585,33 +2597,21 @@
             const mainElement = document.querySelector('main');
             mainElement.style.display = 'none';
 
-            // 템플릿 강제 스타일 조정 (잘림 및 가독성 최적화)
-            template.style.display = 'block';
-            template.style.width = '180mm'; // 실효 너비 강제 고정
-            template.style.position = 'absolute';
-            template.style.left = '0';
-            template.style.top = '0';
-            template.style.zIndex = '-9999';
-
-            // 브라우저 렌더링 대기
+            // 브라우저가 DOM을 완벽히 그릴 시간을 넉넉히 0.3초 부여
             setTimeout(() => {
-                html2pdf().set(opt).from(template).save().then(() => {
-                    template.style.display = 'none';
+                html2pdf().set(opt).from(clone).save().then(() => {
+                    clone.remove(); // 가상 컨테이너 제거
                     mainElement.style.display = 'block';
-                    template.style.position = 'static';
-                    template.style.zIndex = 'auto';
                     hideLoader();
                     showToast("✅ 전문 보고서 PDF 다운로드 성공!", "success");
                 }).catch(err => {
                     console.error("PDF 생성 오류:", err);
-                    template.style.display = 'none';
+                    clone.remove();
                     mainElement.style.display = 'block';
-                    template.style.position = 'static';
-                    template.style.zIndex = 'auto';
                     hideLoader();
                     showToast("PDF 생성 중 오류가 발생했습니다.", "error");
                 });
-            }, 400);
+            }, 300);
         }
 
         // ═══════════════════════════════════════

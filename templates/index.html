@@ -2084,6 +2084,23 @@
                 stds.map(s => `<div style="margin-bottom:0.3rem"><strong style="color:var(--primary-light)">${s.code}</strong> ${s.content.substring(0, 40)}...</div>`).join('') :
                 '<span style="color:var(--text-dim)">선택된 성취기준이 없습니다.</span>';
             renderTaskTypeChips();
+            // 2단계 UI 복원 (루브릭 등)
+            if (assessmentPlan.rubric && assessmentPlan.rubric.length > 0) {
+                const container = document.getElementById('rubric-builder');
+                container.innerHTML = '';
+                renderRubricHeader();
+                assessmentPlan.rubric.forEach(item => {
+                    addRubricRow(item.name || item.항목명);
+                    const newRow = container.lastElementChild;
+                    const inputs = Array.from(newRow.querySelectorAll('input'));
+                    if (inputs.length >= 5) {
+                        inputs[1].value = item.levels["매우잘함"] || "";
+                        inputs[2].value = item.levels["잘함"] || "";
+                        inputs[3].value = item.levels["보통"] || "";
+                        inputs[4].value = item.levels["노력요함"] || "";
+                    }
+                });
+            }
             switchLayer(2);
         }
 
@@ -2098,7 +2115,7 @@
             container.innerHTML = Array.from(found).map(type => `
             <div class="subject-chip task-type-chip" data-type="${type}" onclick="toggleTaskType(this,'${type.replace(/'/g, "\\'")}')">${type}</div>
         `).join('') + `<div id="custom-task-input-wrap" style="display:none;margin-top:0.7rem;width:100%">
-            <textarea id="custom-task-input" placeholder="수행과제 유형 직접 입력" style="width:100%;min-height:60px;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem;resize:vertical" oninput="assessmentPlan.customTaskType=this.value; saveAppState();" ondblclick="openEditor(this, '평가 유형 직접 입력')"></textarea>
+            <textarea id="custom-task-input" placeholder="수행과제 유형 직접 입력" style="width:100%;min-height:60px;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem;resize:vertical" oninput="assessmentPlan.customTaskType=this.value;" onblur="saveAppState();" ondblclick="openEditor(this, '평가 유형 직접 입력')"></textarea>
         </div>`;
             assessmentPlan.taskTypes = [];
             lucide.createIcons();
@@ -2139,8 +2156,8 @@
             const rowId = 'rr-' + Date.now() + Math.random();
             const div = document.createElement('div'); div.id = rowId;
             div.style.cssText = `display:grid;grid-template-columns:160px ${rubricLevels.map(() => '1fr').join(' ')} auto auto;gap:0.5rem;margin-bottom:0.5rem;align-items:center`;
-            const lvls = rubricLevels.map(l => `<input placeholder="${l}" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.78rem;width:100%" onclick="openEditor(this, '${l} 수준 기술어')" oninput="saveAppState()">`).join('');
-            div.innerHTML = `<input value="${defaultName}" placeholder="평가 항목명" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.82rem;width:100%" onclick="openEditor(this, '평가 항목명')" oninput="saveAppState()">${lvls}<span></span>
+            const lvls = rubricLevels.map(l => `<input placeholder="${l}" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.78rem;width:100%" onclick="openEditor(this, '${l} 수준 기술어')" onblur="saveAppState()">`).join('');
+            div.innerHTML = `<input value="${defaultName}" placeholder="평가 항목명" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.82rem;width:100%" onclick="openEditor(this, '평가 항목명')" onblur="saveAppState()">${lvls}<span></span>
             <button onclick="document.getElementById('${rowId}').remove()" style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.3);color:#f87171;border-radius:8px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.75rem">✕</button>`;
             builder.appendChild(div);
         }

@@ -66,10 +66,10 @@
             gap: 0.5rem
         }
 
-        /* --- PDF Export Optimization Styles (Enhanced) --- */
+        /* --- PDF Export Optimization Styles (Fundamental Redesign) --- */
         #pdf-export-template * {
             letter-spacing: -0.3px !important;
-            word-break: keep-all !important;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
         }
 
         #pdf-export-template td,
@@ -2519,10 +2519,10 @@
             const template = document.getElementById('pdf-export-template');
             if (!template) return;
 
-            showLoader("안정화 프로토콜을 통해 고품질 PDF를 생성 중입니다. 잠시만 기다려 주세요...");
+            showLoader("동기화 프로토콜을 통해 초고화질 PDF를 생성 중입니다. 잠시만 기다려 주세요...");
 
             // ──────────────────────────────────────────────────────────
-            // [1단계] 데이터 동적 렌더링 및 준비
+            // [1단계] Preparation & 데이터 주입
             // ──────────────────────────────────────────────────────────
             const safeTitle = (currentPrompt || 'Edu_Navigator')
                 .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
@@ -2548,17 +2548,17 @@
             renderFlowTable();
 
             // ──────────────────────────────────────────────────────────
-            // [2단계] 안정화 프로토콜: 렌더링 리플로우 및 폰트 로드 대기
+            // [2단계] 동기화 프로토콜: 물리적 렌더링 및 대기
             // ──────────────────────────────────────────────────────────
-            // 메인 UI를 일시적으로 숨겨 캡처 전용 환경 조성
             const mainElement = document.querySelector('main');
-            mainElement.style.display = 'none';
+            mainElement.style.display = 'none'; // 메인 UI 숨김
+            template.style.zIndex = '10000'; // 템플릿을 최상단으로 물리적 렌더링
 
-            // 브라우저가 레이아웃과 폰트(Pretendard)를 완전히 그릴 시간을 벌어줌
-            await new Promise(r => setTimeout(r, 500));
+            // 폰트와 표 레이아웃이 완전히 계산될 시간을 넉넉히 확보 (800ms)
+            await new Promise(r => setTimeout(r, 800));
 
             // ──────────────────────────────────────────────────────────
-            // [3단계] html2pdf 옵션 정밀 튜닝 및 내보내기
+            // [3단계] Capture: 스크롤 좌표 역보정 및 저장
             // ──────────────────────────────────────────────────────────
             const opt = {
                 margin: [15, 15, 15, 15],
@@ -2567,24 +2567,27 @@
                 html2canvas: {
                     scale: 2,
                     useCORS: true,
-                    letterRendering: true, // 자간 틀어짐 방지 핵심 옵션
+                    letterRendering: true,
                     logging: false,
-                    scrollY: 0,
-                    windowWidth: 1000 // A4 너비보다 넉넉하게 설정하여 우측 잘림 방지
+                    // 현재 스크롤 위치만큼 위로 오프셋을 주어 (0,0) 절대 좌표 유지
+                    scrollY: -window.scrollY,
+                    windowWidth: 1000
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
             try {
-                // 직접 요소를 타겟팅하여 렌더링 (가상 클론 방식보다 좌표 안정성 높음)
                 await html2pdf().set(opt).from(template).save();
 
+                // Cleanup: 템플릿 숨기기 및 메인 UI 복구
+                template.style.zIndex = '-9999';
                 mainElement.style.display = 'block';
                 hideLoader();
-                showToast("✅ 고품질 PDF 설계서 다운로드 성공!", "success");
+                showToast("✅ 동기화 최적화 PDF 다운로드 성공!", "success");
             } catch (err) {
                 console.error("PDF 생성 오류:", err);
+                template.style.zIndex = '-9999';
                 mainElement.style.display = 'block';
                 hideLoader();
                 showToast("PDF 생성 중 오류가 발생했습니다.", "error");
@@ -2745,9 +2748,9 @@
         </div>
     </div>
 
-    <!-- PDF Export Template (Off-screen Fixed Rendering for Stability) -->
+    <!-- PDF Export Template (Pinned to 0,0 behind UI for Layout Accuracy) -->
     <div id="pdf-export-template"
-        style="display: block !important; visibility: visible !important; position: fixed; left: -10000px; top: 0; width: 185mm; background: white; color: #333; padding: 0; margin: 0; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
+        style="display: block !important; position: fixed; left: 0; top: 0; width: 190mm; z-index: -9999; background: white; visibility: visible !important; color: #333; padding: 0; margin: 0; box-sizing: border-box; line-height: 1.6; font-size: 14px;">
 
         <!-- Header -->
         <div

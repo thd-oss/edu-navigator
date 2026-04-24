@@ -2505,7 +2505,7 @@
             const template = document.getElementById('pdf-export-template');
             if (!template) return;
 
-            showToast("PDF 문서를 생성 중입니다. 잠시만 기다려 주세요.", "info");
+            showLoader("보고서 형식의 PDF 문서를 정밀하게 생성 중입니다. 잠시만 기다려 주세요...");
 
             // 1. 데이터 동적 렌더링
             document.getElementById('pdf-title').innerText = currentPrompt || 'Edu-Navigator 교육과정 설계서';
@@ -2513,7 +2513,7 @@
 
             const eqList = document.getElementById('pdf-eq-list');
             eqList.innerHTML = ubdGoals.essentialQuestions.length > 0 ?
-                ubdGoals.essentialQuestions.map(q => `<li>${q}</li>`).join('') : '<li>설정된 본질적 질문이 없습니다.</li>';
+                ubdGoals.essentialQuestions.map(q => `<li style="margin-bottom:8px;">${q}</li>`).join('') : '<li>설정된 본질적 질문이 없습니다.</li>';
 
             const graspsData = getGRASPSData();
             document.getElementById('pdf-grasps-g').innerText = graspsData.goal || '-';
@@ -2529,21 +2529,21 @@
                 let headers = ['평가 항목', ...rubricLevels];
                 rubricTable.innerHTML = `
                     <thead>
-                        <tr style="background:#f2f2f2">
-                            ${headers.map(h => `<th style="padding:8px; border:1px solid #ddd; text-align:center; font-size:0.9rem">${h}</th>`).join('')}
+                        <tr style="background:#f1f5f9">
+                            ${headers.map(h => `<th style="padding:12px 10px; border:1px solid #cbd5e1; text-align:center; font-size:0.9rem; color:#1e293b;">${h}</th>`).join('')}
                         </tr>
                     </thead>
                     <tbody>
                         ${rubricData.map(r => `
                             <tr>
-                                <td style="padding:8px; border:1px solid #ddd; font-weight:bold; font-size:0.85rem; background:#fafafa">${r.name}</td>
-                                ${rubricLevels.map(l => `<td style="padding:8px; border:1px solid #ddd; font-size:0.85rem">${r.levels[l] || ''}</td>`).join('')}
+                                <td style="padding:12px 10px; border:1px solid #cbd5e1; font-weight:bold; font-size:0.85rem; background:#f8fafc; color:#334155; word-break:keep-all;">${r.name}</td>
+                                ${rubricLevels.map(l => `<td style="padding:12px 10px; border:1px solid #cbd5e1; font-size:0.85rem; color:#475569; word-break:keep-all;">${r.levels[l] || ''}</td>`).join('')}
                             </tr>
                         `).join('')}
                     </tbody>
                 `;
             } else {
-                rubricTable.innerHTML = '<tr><td style="padding:20px; text-align:center; border:1px solid #ddd">작성된 루브릭 데이터가 없습니다.</td></tr>';
+                rubricTable.innerHTML = '<tr><td style="padding:20px; text-align:center; border:1px solid #cbd5e1; color:#64748b;">작성된 루브릭 데이터가 없습니다.</td></tr>';
             }
 
             // 수업 흐름 테이블 렌더링
@@ -2551,17 +2551,16 @@
             if (lessonFlow.length > 0) {
                 flowBody.innerHTML = lessonFlow.map(l => `
                     <tr>
-                        <td style="text-align:center; padding:8px; border:1px solid #ddd; font-weight:bold">${l.id}</td>
-                        <td style="padding:8px; border:1px solid #ddd; font-weight:bold; background:#fafafa">${l.title}</td>
-                        <td style="padding:8px; border:1px solid #ddd; font-size:0.85rem; line-height:1.5">${(l.desc || '').replace(/\n/g, '<br>')}</td>
+                        <td style="text-align:center; padding:15px 8px; border:1px solid #cbd5e1; font-weight:bold; color:#1e293b;">${l.id}</td>
+                        <td style="padding:15px 10px; border:1px solid #cbd5e1; font-weight:bold; background:#f8fafc; color:#1e293b; word-break:keep-all;">${l.title}</td>
+                        <td style="padding:15px 10px; border:1px solid #cbd5e1; font-size:0.85rem; line-height:1.7; color:#334155; text-align:justify; word-break:keep-all; word-wrap:break-word;">${(l.desc || '').replace(/\n/g, '<br>')}</td>
                     </tr>
                 `).join('');
             } else {
-                flowBody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; border:1px solid #ddd">작성된 수업 흐름이 없습니다.</td></tr>';
+                flowBody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; border:1px solid #cbd5e1; color:#64748b;">작성된 수업 흐름이 없습니다.</td></tr>';
             }
 
-            // 2. PDF 파일 생성 및 다운로드 (html2pdf)
-            // 파일명에 사용할 수 없는 특수문자/줄바꿈 제거 및 길이 제한
+            // 2. PDF 내보내기 옵션 설정
             const safeTitle = (currentPrompt || 'Edu_Navigator')
                 .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
                 .trim()
@@ -2569,37 +2568,50 @@
                 .substring(0, 20);
 
             const opt = {
-                margin: 15, // 상하좌우 15mm
+                margin: [15, 15, 15, 15], // 상하좌우 15mm 여백 고정
                 filename: `${safeTitle}_설계서.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, windowWidth: 800 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    scrollY: 0,
+                    windowWidth: 1000 // 충분한 가상 너비 확보
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
             const mainElement = document.querySelector('main');
-            showLoader("PDF 문서를 정밀하게 생성 중입니다. 잠시만 기다려 주세요...");
             mainElement.style.display = 'none';
 
-            template.style.position = 'relative';
+            // 템플릿 강제 스타일 조정 (잘림 및 가독성 최적화)
             template.style.display = 'block';
+            template.style.width = '180mm'; // 실효 너비 강제 고정
+            template.style.position = 'absolute';
+            template.style.left = '0';
+            template.style.top = '0';
+            template.style.zIndex = '-9999';
 
-            // 브라우저가 DOM을 완벽히 그릴 시간을 넉넉히 0.3초 부여
+            // 브라우저 렌더링 대기
             setTimeout(() => {
                 html2pdf().set(opt).from(template).save().then(() => {
-                    // 캡처 완료 후 원상 복구
                     template.style.display = 'none';
                     mainElement.style.display = 'block';
+                    template.style.position = 'static';
+                    template.style.zIndex = 'auto';
                     hideLoader();
-                    showToast("✅ PDF 설계서 다운로드 성공!", "success");
+                    showToast("✅ 전문 보고서 PDF 다운로드 성공!", "success");
                 }).catch(err => {
                     console.error("PDF 생성 오류:", err);
                     template.style.display = 'none';
                     mainElement.style.display = 'block';
+                    template.style.position = 'static';
+                    template.style.zIndex = 'auto';
                     hideLoader();
                     showToast("PDF 생성 중 오류가 발생했습니다.", "error");
                 });
-            }, 300);
+            }, 400);
         }
 
         // ═══════════════════════════════════════
@@ -2716,93 +2728,152 @@
 
     <!-- PDF Export Hidden Template (A4 Printing) -->
     <div id="pdf-export-template"
-        style="display: none; background: white; color: #333; padding: 0; margin: 0 auto; width: 800px; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
-        <div style="text-align: right; font-size: 0.8rem; color: #666; margin-bottom: 30px;">Edu-Navigator AI Curriculum
-            Designer</div>
+        style="display: none; background: white; color: #333; padding: 0; margin: 0; width: 100%; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
 
-        <h1 id="pdf-title"
-            style="text-align: center; font-size: 2.2rem; font-weight: 800; border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 40px; color: #000;">
-        </h1>
+        <!-- Header -->
+        <div
+            style="text-align: right; font-size: 0.75rem; color: #94a3b8; margin-bottom: 25px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">
+            Edu-Navigator AI Curriculum Analysis Report
+        </div>
 
-        <div style="margin-bottom: 35px;">
+        <!-- Title -->
+        <div style="margin-bottom: 50px; text-align: center;">
+            <h1 id="pdf-title"
+                style="font-size: 2.5rem; font-weight: 850; color: #0f172a; margin-bottom: 10px; word-break: keep-all; line-height: 1.2;">
+            </h1>
+            <div style="width: 60px; height: 4px; background: #4f46e5; margin: 20px auto 10px auto;"></div>
+            <div style="width: 120px; height: 1px; background: #e2e8f0; margin: 0 auto;"></div>
+            <p style="margin-top: 15px; font-size: 1.1rem; color: #64748b; font-weight: 500;">백워드(UbD) 기반 교육과정 설계서</p>
+        </div>
+
+        <!-- Step 1 Section -->
+        <div style="margin-bottom: 45px; width: 100%;">
             <h2
-                style="font-size: 1.4rem; border-left: 6px solid #4f46e5; padding-left: 12px; margin-bottom: 15px; color: #1e1b4b; background: #f8fafc; padding-top: 5px; padding-bottom: 5px;">
-                Step 1. 바라는 결과 (Desired Results)</h2>
-            <div style="padding-left: 10px;">
-                <p style="margin-bottom: 10px;"><strong>영속적 이해 (EU):</strong> <span id="pdf-eu"></span></p>
-                <p style="margin-bottom: 5px;"><strong>본질적 질문 (EQ):</strong></p>
-                <ul id="pdf-eq-list" style="margin-top: 0; padding-left: 25px;"></ul>
+                style="font-size: 1.3rem; font-weight: 700; color: #1e293b; background: #f1f5f9; padding: 8px 15px; border-left: 5px solid #4f46e5; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                Step 1. 바라는 결과 (Desired Results)
+            </h2>
+            <div style="padding: 0 5px;">
+                <div style="margin-bottom: 18px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px;">
+                    <div
+                        style="font-weight: 700; color: #475569; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #4f46e5;">●</span> 영속적 이해 (Enduring Understanding)
+                    </div>
+                    <p id="pdf-eu"
+                        style="font-size: 1rem; color: #334155; line-height: 1.7; text-align: justify; word-break: keep-all;">
+                    </p>
+                </div>
+                <div>
+                    <div
+                        style="font-weight: 700; color: #475569; font-size: 0.95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #4f46e5;">●</span> 본질적 질문 (Essential Questions)
+                    </div>
+                    <ul id="pdf-eq-list"
+                        style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.7; font-size: 0.95rem;">
+                    </ul>
+                </div>
             </div>
         </div>
 
-        <div style="margin-bottom: 35px;">
+        <!-- Step 2 Section -->
+        <div style="margin-bottom: 45px; width: 100%;">
             <h2
-                style="font-size: 1.4rem; border-left: 6px solid #10b981; padding-left: 12px; margin-bottom: 15px; color: #064e3b; background: #f0fdf4; padding-top: 5px; padding-bottom: 5px;">
-                Step 2. 수용 가능한 증거 (Evidence)</h2>
-            <div style="padding-left: 10px;">
-                <h3 style="font-size: 1.1rem; margin-bottom: 10px; color: #333;">■ GRASPS 수행과제 시나리오</h3>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; table-layout: fixed;">
-                    <tr>
-                        <th width="100"
-                            style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">Goal
-                        </th>
-                        <td id="pdf-grasps-g"
-                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">Role
-                        </th>
-                        <td id="pdf-grasps-r"
-                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
-                            Audience</th>
-                        <td id="pdf-grasps-a"
-                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
-                            Situation</th>
-                        <td id="pdf-grasps-s"
-                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
-                            Product</th>
-                        <td id="pdf-grasps-p"
-                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
-                        </td>
-                    </tr>
-                </table>
+                style="font-size: 1.3rem; font-weight: 700; color: #064e3b; background: #f0fdf4; padding: 8px 15px; border-left: 5px solid #10b981; margin-bottom: 20px;">
+                Step 2. 수용 가능한 증거 (Evidence)
+            </h2>
+            <div style="padding: 0 5px;">
+                <div style="margin-bottom: 25px;">
+                    <div
+                        style="font-weight: 700; color: #374151; font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #10b981;">■</span> GRASPS 수행과제 시나리오
+                    </div>
+                    <table
+                        style="width: 100%; border-collapse: collapse; table-layout: fixed; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                        <tr>
+                            <th width="100"
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                Goal</th>
+                            <td id="pdf-grasps-g"
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all; text-align: justify;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                Role</th>
+                            <td id="pdf-grasps-r"
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                Audience</th>
+                            <td id="pdf-grasps-a"
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                Situation</th>
+                            <td id="pdf-grasps-s"
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all; text-align: justify;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                Product</th>
+                            <td id="pdf-grasps-p"
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; font-weight: 600; word-break: keep-all;">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
 
-                <h3 style="font-size: 1.1rem; margin-bottom: 10px; color: #333;">■ 수행평가 루브릭 (채점 기준)</h3>
-                <table id="pdf-rubric-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
-                </table>
+                <div>
+                    <div
+                        style="font-weight: 700; color: #374151; font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #10b981;">■</span> 성취기준 기반 루브릭 (Assessment Rubric)
+                    </div>
+                    <table id="pdf-rubric-table"
+                        style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #e5e7eb;">
+                    </table>
+                </div>
             </div>
         </div>
 
+        <!-- Step 3 Section -->
         <div class="html2pdf__page-break"></div>
-        <div style="margin-bottom: 35px; margin-top: 20px;">
+        <div style="margin-top: 25px; margin-bottom: 40px; width: 100%;">
             <h2
-                style="font-size: 1.4rem; border-left: 6px solid #f59e0b; padding-left: 12px; margin-bottom: 15px; color: #78350f; background: #fffbeb; padding-top: 5px; padding-bottom: 5px;">
-                Step 3. 학습 경험 및 수업 계획 (Learning Plan)</h2>
-            <div style="padding-left: 10px;">
-                <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                style="font-size: 1.3rem; font-weight: 700; color: #78350f; background: #fffbeb; padding: 8px 15px; border-left: 5px solid #f59e0b; margin-bottom: 20px;">
+                Step 3. 학습 경험 및 수업 흐름 (Learning Plan)
+            </h2>
+            <div style="padding: 0 5px;">
+                <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #e5e7eb;">
                     <thead>
-                        <tr style="background: #f9fafb;">
-                            <th width="50" style="padding: 10px; border: 1px solid #ddd; text-align: center;">차시</th>
-                            <th width="160" style="padding: 10px; border: 1px solid #ddd; text-align: center;">주제</th>
-                            <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">주요 학습 활동 및 수업 흐름</th>
+                        <tr style="background: #fdfaf1;">
+                            <th width="50"
+                                style="padding: 12px; border: 1px solid #e5e7eb; text-align: center; color: #92400e; font-size: 0.85rem;">
+                                차시</th>
+                            <th width="160"
+                                style="padding: 12px; border: 1px solid #e5e7eb; text-align: center; color: #92400e; font-size: 0.85rem;">
+                                학습 주제</th>
+                            <th
+                                style="padding: 12px; border: 1px solid #e5e7eb; text-align: center; color: #92400e; font-size: 0.85rem;">
+                                활동 내용 및 WHERETO 흐름</th>
                         </tr>
                     </thead>
                     <tbody id="pdf-flow-body"></tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div
+            style="margin-top: 60px; text-align: center; padding-top: 20px; border-top: 1px solid #f1f5f9; color: #94a3b8; font-size: 0.8rem;">
+            본 문서는 Edu-Navigator AI 엔진을 통해 분석 및 설계되었습니다.
         </div>
     </div>
 </body>

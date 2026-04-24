@@ -66,6 +66,19 @@
             gap: 0.5rem
         }
 
+        /* --- PDF Export Optimization Styles --- */
+        #pdf-export-template * {
+            letter-spacing: -0.5px !important;
+            word-break: keep-all !important;
+        }
+
+        #pdf-export-template td,
+        #pdf-export-template p {
+            padding-right: 15px !important;
+        }
+
+        /* -------------------------------------- */
+
         main {
             max-width: 1200px;
             margin: 0 auto;
@@ -2530,25 +2543,28 @@
             document.getElementById('pdf-grasps-s').innerText = graspsData.situation || '-';
             document.getElementById('pdf-grasps-p').innerText = assessmentPlan.taskTypes.join(', ') + (assessmentPlan.customTaskType ? ` (${assessmentPlan.customTaskType})` : '');
 
-            // 루브릭/수업흐름 렌더링 (중략/기존 로직 유지)
             renderRubricTable();
             renderFlowTable();
 
             // ──────────────────────────────────────────────────────────
-            // [2단계] 가상 복제본(Static Flow) 생성 및 레이아웃 안정화
+            // [2단계] 가상 복제본(Clone) 생성 및 레이아웃 안정화
             // ──────────────────────────────────────────────────────────
             const clone = template.cloneNode(true);
-            clone.id = 'pdf-clone-static-flow';
+            clone.id = 'pdf-clone-temp';
 
-            // 스타일 강제 주입: 라이브러리가 높이를 인식하도록 표준 흐름 내 배치
-            clone.style.display = 'block';
-            clone.style.position = 'relative';
-            clone.style.visibility = 'visible';
-            clone.style.width = '190mm'; // A4 안전 너비 고정
-            clone.style.zIndex = '-1';   // 사용자 눈에 보이지 않게 처리
-            clone.style.margin = '0 auto';
-            clone.style.overflow = 'visible';
-            clone.style.height = 'auto';
+            // 스타일 강제 주입: A4 안전 너비 185mm 고정 및 가시성 확보
+            Object.assign(clone.style, {
+                display: 'block',
+                position: 'absolute',
+                left: '0',
+                top: '0',
+                width: '185mm',
+                height: 'auto',
+                zIndex: '-1',
+                background: 'white',
+                visibility: 'visible',
+                overflow: 'visible'
+            });
 
             document.body.appendChild(clone);
 
@@ -2556,17 +2572,18 @@
             // [3단계] html2pdf 옵션 정밀 튜닝 및 내보내기
             // ──────────────────────────────────────────────────────────
             const opt = {
-                margin: [15, 15, 15, 15], // 상하좌우 15mm 여백 고정
+                margin: [15, 15, 15, 15],
                 filename: `${safeTitle}_설계서.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: {
                     scale: 2,
                     useCORS: true,
-                    logging: false,
-                    scrollY: 0 // 스크롤 위치로 인한 좌표 오류 방지
+                    letterRendering: true, // 자간 틀어짐 방지
+                    scrollY: 0,
+                    windowWidth: 1200 // 캡처 뷰포트 너비 확장 (잘림 방지)
                 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // 표 중간 잘림 방지
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
             const mainElement = document.querySelector('main');
@@ -2575,10 +2592,10 @@
             // 브라우저 페인팅 대기 후 저장
             setTimeout(() => {
                 html2pdf().set(opt).from(clone).save().then(() => {
-                    clone.remove(); // 메모리 정리: 가상 컨테이너 제거
+                    clone.remove(); // 사용 완료된 클론 제거
                     mainElement.style.display = 'block';
                     hideLoader();
-                    showToast("✅ 안정화 로직 적용 PDF 다운로드 성공!", "success");
+                    showToast("✅ 통합 품질 개선 PDF 다운로드 성공!", "success");
                 }).catch(err => {
                     console.error("PDF 생성 오류:", err);
                     clone.remove();
@@ -2586,7 +2603,7 @@
                     hideLoader();
                     showToast("PDF 생성 중 오류가 발생했습니다.", "error");
                 });
-            }, 300);
+            }, 500);
         }
 
         // 보조 함수: 루브릭 생성 로직 분리 (가독성용)
@@ -2745,7 +2762,7 @@
 
     <!-- PDF Export Hidden Template (A4 Printing) -->
     <div id="pdf-export-template"
-        style="display: none; background: white; color: #333; padding: 0; margin: 0; width: 100%; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
+        style="display: block; position: absolute; left: -9999px; background: white; color: #333; padding: 0; margin: 0; width: 100%; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
 
         <!-- Header -->
         <div

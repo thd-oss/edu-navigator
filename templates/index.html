@@ -2507,7 +2507,9 @@
 
             showLoader("보고서 형식의 PDF 문서를 정밀하게 생성 중입니다. 잠시만 기다려 주세요...");
 
-            // 1. 원본 템플릿에 데이터 동적 렌더링
+            // ──────────────────────────────────────────────────────────
+            // [1단계] 데이터 동적 렌더링 및 준비
+            // ──────────────────────────────────────────────────────────
             const safeTitle = (currentPrompt || 'Edu_Navigator')
                 .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
                 .trim()
@@ -2528,7 +2530,67 @@
             document.getElementById('pdf-grasps-s').innerText = graspsData.situation || '-';
             document.getElementById('pdf-grasps-p').innerText = assessmentPlan.taskTypes.join(', ') + (assessmentPlan.customTaskType ? ` (${assessmentPlan.customTaskType})` : '');
 
-            // 루브릭 테이블 렌더링
+            // 루브릭/수업흐름 렌더링 (중략/기존 로직 유지)
+            renderRubricTable();
+            renderFlowTable();
+
+            // ──────────────────────────────────────────────────────────
+            // [2단계] 가상 복제본(Static Flow) 생성 및 레이아웃 안정화
+            // ──────────────────────────────────────────────────────────
+            const clone = template.cloneNode(true);
+            clone.id = 'pdf-clone-static-flow';
+
+            // 스타일 강제 주입: 라이브러리가 높이를 인식하도록 표준 흐름 내 배치
+            clone.style.display = 'block';
+            clone.style.position = 'relative';
+            clone.style.visibility = 'visible';
+            clone.style.width = '190mm'; // A4 안전 너비 고정
+            clone.style.zIndex = '-1';   // 사용자 눈에 보이지 않게 처리
+            clone.style.margin = '0 auto';
+            clone.style.overflow = 'visible';
+            clone.style.height = 'auto';
+
+            document.body.appendChild(clone);
+
+            // ──────────────────────────────────────────────────────────
+            // [3단계] html2pdf 옵션 정밀 튜닝 및 내보내기
+            // ──────────────────────────────────────────────────────────
+            const opt = {
+                margin: [15, 15, 15, 15], // 상하좌우 15mm 여백 고정
+                filename: `${safeTitle}_설계서.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    scrollY: 0 // 스크롤 위치로 인한 좌표 오류 방지
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // 표 중간 잘림 방지
+            };
+
+            const mainElement = document.querySelector('main');
+            mainElement.style.display = 'none';
+
+            // 브라우저 페인팅 대기 후 저장
+            setTimeout(() => {
+                html2pdf().set(opt).from(clone).save().then(() => {
+                    clone.remove(); // 메모리 정리: 가상 컨테이너 제거
+                    mainElement.style.display = 'block';
+                    hideLoader();
+                    showToast("✅ 안정화 로직 적용 PDF 다운로드 성공!", "success");
+                }).catch(err => {
+                    console.error("PDF 생성 오류:", err);
+                    clone.remove();
+                    mainElement.style.display = 'block';
+                    hideLoader();
+                    showToast("PDF 생성 중 오류가 발생했습니다.", "error");
+                });
+            }, 300);
+        }
+
+        // 보조 함수: 루브릭 생성 로직 분리 (가독성용)
+        function renderRubricTable() {
             const rubricTable = document.getElementById('pdf-rubric-table');
             const rubricData = assessmentPlan.rubric || [];
             if (rubricData.length > 0) {
@@ -2551,8 +2613,10 @@
             } else {
                 rubricTable.innerHTML = '<tr><td style="padding:20px; text-align:center; border:1px solid #cbd5e1; color:#64748b;">작성된 루브릭 데이터가 없습니다.</td></tr>';
             }
+        }
 
-            // 수업 흐름 테이블 렌더링
+        // 보조 함수: 수업흐름 생성 로직 분리 (가독성용)
+        function renderFlowTable() {
             const flowBody = document.getElementById('pdf-flow-body');
             if (lessonFlow.length > 0) {
                 flowBody.innerHTML = lessonFlow.map(l => `
@@ -2565,53 +2629,6 @@
             } else {
                 flowBody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; border:1px solid #cbd5e1; color:#64748b;">작성된 수업 흐름이 없습니다.</td></tr>';
             }
-
-            // 2. 가상 복제본(Clone) 생성 및 스타일 강제화 (가장 확실한 렌더링 방식)
-            const clone = template.cloneNode(true);
-            clone.id = 'pdf-clone-temp';
-            clone.style.display = 'block';
-            clone.style.position = 'relative'; // 표준 흐름 내 배치
-            clone.style.visibility = 'visible';
-            clone.style.width = '190mm'; // A4 실효 너비 강제 고정
-            clone.style.zIndex = '-1'; // 보이지 않는 곳에 배치
-            clone.style.margin = '0 auto';
-            clone.style.overflow = 'visible';
-            clone.style.height = 'auto';
-            document.body.appendChild(clone);
-
-            // 3. PDF 내보내기 옵션 및 실행
-            const opt = {
-                margin: [15, 15, 15, 15], // 상하좌우 15mm 여백 고정
-                filename: `${safeTitle}_설계서.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    scrollY: 0 // 스크롤 위치로 인한 좌표 오류 방지
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-
-            const mainElement = document.querySelector('main');
-            mainElement.style.display = 'none';
-
-            // 브라우저가 DOM을 완벽히 그릴 시간을 넉넉히 0.3초 부여
-            setTimeout(() => {
-                html2pdf().set(opt).from(clone).save().then(() => {
-                    clone.remove(); // 가상 컨테이너 제거
-                    mainElement.style.display = 'block';
-                    hideLoader();
-                    showToast("✅ 전문 보고서 PDF 다운로드 성공!", "success");
-                }).catch(err => {
-                    console.error("PDF 생성 오류:", err);
-                    clone.remove();
-                    mainElement.style.display = 'block';
-                    hideLoader();
-                    showToast("PDF 생성 중 오류가 발생했습니다.", "error");
-                });
-            }, 300);
         }
 
         // ═══════════════════════════════════════

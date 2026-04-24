@@ -2577,14 +2577,25 @@
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            html2pdf().set(opt).from(template).save().then(() => {
-                template.style.display = 'none'; // 다시 숨김
-                showToast("✅ PDF 설계서 다운로드 성공!", "success");
-            }).catch(err => {
-                console.error("PDF 생성 오류:", err);
-                template.style.display = 'none';
-                showToast("PDF 생성 중 오류가 발생했습니다.", "error");
-            });
+            // 화면 밖에서 렌더링하도록 처리 (UI 꿀렁임 방지)
+            template.style.position = 'absolute';
+            template.style.left = '-9999px';
+            template.style.top = '0';
+            template.style.display = 'block';
+
+            // 브라우저가 화면을 그릴(Painting) 시간을 0.1초 확보
+            setTimeout(() => {
+                html2pdf().set(opt).from(template).save().then(() => {
+                    template.style.display = 'none'; // 다시 숨김
+                    template.style.position = 'static'; // 원상복구
+                    showToast("✅ PDF 설계서 다운로드 성공!", "success");
+                }).catch(err => {
+                    console.error("PDF 생성 오류:", err);
+                    template.style.display = 'none';
+                    template.style.position = 'static';
+                    showToast("PDF 생성 중 오류가 발생했습니다.", "error");
+                });
+            }, 100);
         }
 
         // ═══════════════════════════════════════

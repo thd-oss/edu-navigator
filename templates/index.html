@@ -2569,29 +2569,19 @@
                 .substring(0, 20);
 
             const opt = {
-                margin: [15, 15],
+                margin: 15, // 상하좌우 15mm
                 filename: `${safeTitle}_설계서.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+                html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, windowWidth: 800 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            // 가장 확실한 렌더링 방식: 로딩창이 화면을 덮는 동안 메인 UI를 숨기고 템플릿을 정상 배치하여 캡처
             const mainElement = document.querySelector('main');
-
             showLoader("PDF 문서를 정밀하게 생성 중입니다. 잠시만 기다려 주세요...");
-
-            // 메인 UI 숨기기
             mainElement.style.display = 'none';
 
-            // 템플릿을 화면에 당당하게 배치 (로딩창이 덮고 있어 사용자는 모름)
             template.style.position = 'relative';
-            template.style.top = 'auto';
-            template.style.left = 'auto';
-            template.style.zIndex = '1';
-            template.style.margin = '0 auto';
-            template.style.width = '210mm';
             template.style.display = 'block';
 
             // 브라우저가 DOM을 완벽히 그릴 시간을 넉넉히 0.3초 부여
@@ -2726,7 +2716,7 @@
 
     <!-- PDF Export Hidden Template (A4 Printing) -->
     <div id="pdf-export-template"
-        style="display: none; background: white; color: #333; padding: 25mm 20mm; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6;">
+        style="display: none; background: white; color: #333; padding: 0; margin: 0 auto; width: 800px; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
         <div style="text-align: right; font-size: 0.8rem; color: #666; margin-bottom: 30px;">Edu-Navigator AI Curriculum
             Designer</div>
 
@@ -2756,31 +2746,36 @@
                         <th width="100"
                             style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">Goal
                         </th>
-                        <td id="pdf-grasps-g" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        <td id="pdf-grasps-g"
+                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
                         </td>
                     </tr>
                     <tr>
                         <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">Role
                         </th>
-                        <td id="pdf-grasps-r" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        <td id="pdf-grasps-r"
+                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
                         </td>
                     </tr>
                     <tr>
                         <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
                             Audience</th>
-                        <td id="pdf-grasps-a" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        <td id="pdf-grasps-a"
+                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
                         </td>
                     </tr>
                     <tr>
                         <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
                             Situation</th>
-                        <td id="pdf-grasps-s" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        <td id="pdf-grasps-s"
+                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
                         </td>
                     </tr>
                     <tr>
                         <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
                             Product</th>
-                        <td id="pdf-grasps-p" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        <td id="pdf-grasps-p"
+                            style="padding: 10px; border: 1px solid #ddd; word-break: keep-all; word-wrap: break-word; line-height: 1.6;">
                         </td>
                     </tr>
                 </table>
@@ -2791,7 +2786,8 @@
             </div>
         </div>
 
-        <div style="page-break-before: always; margin-bottom: 35px;">
+        <div class="html2pdf__page-break"></div>
+        <div style="margin-bottom: 35px; margin-top: 20px;">
             <h2
                 style="font-size: 1.4rem; border-left: 6px solid #f59e0b; padding-left: 12px; margin-bottom: 15px; color: #78350f; background: #fffbeb; padding-top: 5px; padding-bottom: 5px;">
                 Step 3. 학습 경험 및 수업 계획 (Learning Plan)</h2>

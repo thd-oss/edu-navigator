@@ -66,15 +66,16 @@
             gap: 0.5rem
         }
 
-        /* --- PDF Export Optimization Styles --- */
+        /* --- PDF Export Optimization Styles (Enhanced) --- */
         #pdf-export-template * {
-            letter-spacing: -0.5px !important;
+            letter-spacing: -0.3px !important;
             word-break: keep-all !important;
         }
 
         #pdf-export-template td,
-        #pdf-export-template p {
-            padding-right: 15px !important;
+        #pdf-export-template p,
+        #pdf-export-template div {
+            padding-right: 20px !important;
         }
 
         /* -------------------------------------- */
@@ -2514,11 +2515,11 @@
             setTimeout(() => { modal.style.display = 'none'; }, 300);
         }
 
-        function exportToPDF() {
+        async function exportToPDF() {
             const template = document.getElementById('pdf-export-template');
             if (!template) return;
 
-            showLoader("보고서 형식의 PDF 문서를 정밀하게 생성 중입니다. 잠시만 기다려 주세요...");
+            showLoader("안정화 프로토콜을 통해 고품질 PDF를 생성 중입니다. 잠시만 기다려 주세요...");
 
             // ──────────────────────────────────────────────────────────
             // [1단계] 데이터 동적 렌더링 및 준비
@@ -2547,26 +2548,14 @@
             renderFlowTable();
 
             // ──────────────────────────────────────────────────────────
-            // [2단계] 가상 복제본(Clone) 생성 및 레이아웃 안정화
+            // [2단계] 안정화 프로토콜: 렌더링 리플로우 및 폰트 로드 대기
             // ──────────────────────────────────────────────────────────
-            const clone = template.cloneNode(true);
-            clone.id = 'pdf-clone-temp';
+            // 메인 UI를 일시적으로 숨겨 캡처 전용 환경 조성
+            const mainElement = document.querySelector('main');
+            mainElement.style.display = 'none';
 
-            // 스타일 강제 주입: A4 안전 너비 185mm 고정 및 가시성 확보
-            Object.assign(clone.style, {
-                display: 'block',
-                position: 'absolute',
-                left: '0',
-                top: '0',
-                width: '185mm',
-                height: 'auto',
-                zIndex: '-1',
-                background: 'white',
-                visibility: 'visible',
-                overflow: 'visible'
-            });
-
-            document.body.appendChild(clone);
+            // 브라우저가 레이아웃과 폰트(Pretendard)를 완전히 그릴 시간을 벌어줌
+            await new Promise(r => setTimeout(r, 500));
 
             // ──────────────────────────────────────────────────────────
             // [3단계] html2pdf 옵션 정밀 튜닝 및 내보내기
@@ -2578,32 +2567,28 @@
                 html2canvas: {
                     scale: 2,
                     useCORS: true,
-                    letterRendering: true, // 자간 틀어짐 방지
+                    letterRendering: true, // 자간 틀어짐 방지 핵심 옵션
+                    logging: false,
                     scrollY: 0,
-                    windowWidth: 1200 // 캡처 뷰포트 너비 확장 (잘림 방지)
+                    windowWidth: 1000 // A4 너비보다 넉넉하게 설정하여 우측 잘림 방지
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            const mainElement = document.querySelector('main');
-            mainElement.style.display = 'none';
+            try {
+                // 직접 요소를 타겟팅하여 렌더링 (가상 클론 방식보다 좌표 안정성 높음)
+                await html2pdf().set(opt).from(template).save();
 
-            // 브라우저 페인팅 대기 후 저장
-            setTimeout(() => {
-                html2pdf().set(opt).from(clone).save().then(() => {
-                    clone.remove(); // 사용 완료된 클론 제거
-                    mainElement.style.display = 'block';
-                    hideLoader();
-                    showToast("✅ 통합 품질 개선 PDF 다운로드 성공!", "success");
-                }).catch(err => {
-                    console.error("PDF 생성 오류:", err);
-                    clone.remove();
-                    mainElement.style.display = 'block';
-                    hideLoader();
-                    showToast("PDF 생성 중 오류가 발생했습니다.", "error");
-                });
-            }, 500);
+                mainElement.style.display = 'block';
+                hideLoader();
+                showToast("✅ 고품질 PDF 설계서 다운로드 성공!", "success");
+            } catch (err) {
+                console.error("PDF 생성 오류:", err);
+                mainElement.style.display = 'block';
+                hideLoader();
+                showToast("PDF 생성 중 오류가 발생했습니다.", "error");
+            }
         }
 
         // 보조 함수: 루브릭 생성 로직 분리 (가독성용)
@@ -2760,9 +2745,9 @@
         </div>
     </div>
 
-    <!-- PDF Export Hidden Template (A4 Printing) -->
+    <!-- PDF Export Template (Off-screen Fixed Rendering for Stability) -->
     <div id="pdf-export-template"
-        style="display: block; position: absolute; left: -9999px; background: white; color: #333; padding: 0; margin: 0; width: 100%; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
+        style="display: block !important; visibility: visible !important; position: fixed; left: -10000px; top: 0; width: 185mm; background: white; color: #333; padding: 0; margin: 0; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6; font-size: 14px;">
 
         <!-- Header -->
         <div

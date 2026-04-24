@@ -2577,31 +2577,39 @@
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            // 화면 안에서 렌더링하되, z-index를 이용해 현재 화면 '뒤'에 숨김 (빈 페이지 오류 해결)
-            template.style.position = 'absolute';
-            template.style.top = '0';
-            template.style.left = '0';
-            template.style.zIndex = '-9999';
-            template.style.width = '210mm'; // A4 사이즈 너비 고정
+            // 가장 확실한 렌더링 방식: 로딩창이 화면을 덮는 동안 메인 UI를 숨기고 템플릿을 정상 배치하여 캡처
+            const mainElement = document.querySelector('main');
+
+            showLoader("PDF 문서를 정밀하게 생성 중입니다. 잠시만 기다려 주세요...");
+
+            // 메인 UI 숨기기
+            mainElement.style.display = 'none';
+
+            // 템플릿을 화면에 당당하게 배치 (로딩창이 덮고 있어 사용자는 모름)
+            template.style.position = 'relative';
+            template.style.top = 'auto';
+            template.style.left = 'auto';
+            template.style.zIndex = '1';
+            template.style.margin = '0 auto';
+            template.style.width = '210mm';
             template.style.display = 'block';
 
-            // 브라우저가 화면을 그릴(Painting) 시간을 0.1초 확보
+            // 브라우저가 DOM을 완벽히 그릴 시간을 넉넉히 0.3초 부여
             setTimeout(() => {
                 html2pdf().set(opt).from(template).save().then(() => {
-                    template.style.display = 'none'; // 다시 숨김
-                    template.style.position = 'static'; // 원상복구
-                    template.style.zIndex = 'auto';
-                    template.style.width = 'auto';
+                    // 캡처 완료 후 원상 복구
+                    template.style.display = 'none';
+                    mainElement.style.display = 'block';
+                    hideLoader();
                     showToast("✅ PDF 설계서 다운로드 성공!", "success");
                 }).catch(err => {
                     console.error("PDF 생성 오류:", err);
                     template.style.display = 'none';
-                    template.style.position = 'static';
-                    template.style.zIndex = 'auto';
-                    template.style.width = 'auto';
+                    mainElement.style.display = 'block';
+                    hideLoader();
                     showToast("PDF 생성 중 오류가 발생했습니다.", "error");
                 });
-            }, 100);
+            }, 300);
         }
 
         // ═══════════════════════════════════════

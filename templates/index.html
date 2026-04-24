@@ -2595,19 +2595,20 @@
             // graspsData.standards는 이미 문자열이므로 .join() 없이 직접 주입
             document.getElementById('pdf-grasps-std').innerText = graspsData.standards || '-';
 
-            // [NEW] 지식 및 기능 매핑
+            // [NEW] 지식 및 기능 매핑 (태그 간격 및 마진 정밀 조정)
             const ksContainer = document.getElementById('pdf-ks-list');
             if (ksContainer) {
-                const kTags = (ubdGoals.knowledge || []).map(t => `<span style="display:inline-block; border:1px solid #e2e8f0; padding:2px 8px; border-radius:4px; margin-right:5px; margin-bottom:5px; background:#f1f5f9;">[지식] ${t}</span>`).join('');
-                const sTags = (ubdGoals.skills || []).map(t => `<span style="display:inline-block; border:1px solid #e2e8f0; padding:2px 8px; border-radius:4px; margin-right:5px; margin-bottom:5px; background:#f8fafc;">[기능] ${t}</span>`).join('');
+                const kTags = (ubdGoals.knowledge || []).map(t => `<span style="display:inline-block; border:1px solid #cbd5e1; padding:3px 10px; border-radius:6px; margin-right:8px; margin-bottom:8px; background:#f1f5f9; color:#1e293b; font-size:0.85rem; font-weight:400;">[지식] ${t}</span>`).join('');
+                const sTags = (ubdGoals.skills || []).map(t => `<span style="display:inline-block; border:1px solid #cbd5e1; padding:3px 10px; border-radius:6px; margin-right:8px; margin-bottom:8px; background:#ffffff; color:#1e293b; font-size:0.85rem; font-weight:400;">[기능] ${t}</span>`).join('');
                 ksContainer.innerHTML = (kTags + sTags) || '추출된 지식 및 기능이 없습니다.';
             }
 
-            // [NEW] 기대 효과 매핑
+            // [NEW] 기대 효과 매핑 (본문용 폰트 위계 적용)
             const expectedEl = document.getElementById('pdf-expected-effects');
             if (expectedEl) {
+                expectedEl.style.fontWeight = "400"; // 본문용 Normal weight 강제
                 expectedEl.innerText = ubdGoals.enduringUnderstanding ?
-                    `학생들은 본 프로젝트를 통해 "${ubdGoals.enduringUnderstanding}"라는 영속적 가치를 체득하고 실천적 역량을 함양할 것으로 기대됨.` :
+                    `학생들은 이번 프로젝트를 통해 "${ubdGoals.enduringUnderstanding}"라는 영속적 가치를 내면화하고, 수업 과정에서 습득한 지식과 기능을 통합하여 실생활 맥락에서 문제를 해결하는 창의적 역량을 함양할 것으로 기대함.` :
                     '교육과정 설계를 통한 체계적인 성취기준 달성 및 수업의 질 개선.';
             }
 
@@ -2829,66 +2830,66 @@
             Edu-Navigator AI Curriculum Analysis Report
         </div>
 
-        <!-- Title Section -->
+        <!-- Title Section (Level 1) -->
         <div style="margin-bottom: 60px; text-align: center;">
             <h1 id="pdf-title"
-                style="font-size: 2.2rem; font-weight: 850; color: #0f172a; margin-bottom: 12px; word-break: keep-all; line-height: 1.2;">
+                style="font-size: 2.4rem; font-weight: 850; color: #0f172a; margin-bottom: 12px; word-break: keep-all; line-height: 1.2;">
             </h1>
-            <div style="font-size: 0.9rem; color: #64748b; font-weight: 500; margin-bottom: 25px;">
-                Education Architect: Baegot Raon Elementary School / AI Curriculum Design Support
+            <div style="font-size: 0.95rem; color: #64748b; font-weight: 500; margin-bottom: 25px;">
+                Education Architect: Baegot Raon Elementary School / UbD AI Design Protocol
             </div>
-            <div style="width: 40px; height: 3px; background: #4f46e5; margin: 0 auto 15px auto;"></div>
-            <p style="font-size: 1.05rem; color: #475569; font-weight: 600; letter-spacing: 0.05em;">백워드(UbD) 기반 맞춤형
-                교육과정 설계서</p>
+            <div style="width: 45px; height: 3px; background: #4f46e5; margin: 0 auto 15px auto;"></div>
+            <p style="font-size: 1.1rem; color: #475569; font-weight: 600; letter-spacing: 0.05em;">백워드(UbD) 기반 맞춤형 교육과정
+                설계서</p>
         </div>
 
         <!-- Step 1 Section -->
         <div style="margin-bottom: 45px; width: 100%;">
             <h2
-                style="font-size: 1.3rem; font-weight: 700; color: #1e293b; background: #f1f5f9; padding: 8px 15px; border-left: 5px solid #4f46e5; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                style="font-size: 1.35rem; font-weight: 700; color: #1e293b; background: #f1f5f9; padding: 10px 18px; border-left: 6px solid #4f46e5; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
                 Step 1. 바라는 결과 (Desired Results)
             </h2>
             <div style="padding: 0 5px;">
-                <!-- Enduring Understanding -->
-                <div style="margin-bottom: 22px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px;">
+                <!-- Enduring Understanding (Level 3 Label + Level 4 Body) -->
+                <div class="pdf-item-group" style="margin-bottom: 28px;">
                     <div
-                        style="font-weight: 700; color: #4f46e5; font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        style="font-weight: 700; color: #4f46e5; font-size: 1.05rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2rem;">●</span> 영속적 이해 (Enduring Understanding)
                     </div>
                     <p id="pdf-eu"
-                        style="font-size: 0.95rem; color: #334155; line-height: 1.6; text-align: justify; word-break: keep-all; font-weight: 400; background: #f8fafc; padding: 12px; border-radius: 6px;">
+                        style="font-size: 0.95rem; color: #334155; line-height: 1.7; text-align: justify; word-break: keep-all; font-weight: 400; background: #f8fafc; padding: 14px 16px; border-radius: 10px; border: 1px solid #f1f5f9; margin: 0;">
                     </p>
                 </div>
 
                 <!-- Essential Questions -->
-                <div style="margin-bottom: 22px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px;">
+                <div class="pdf-item-group" style="margin-bottom: 28px;">
                     <div
-                        style="font-weight: 700; color: #4f46e5; font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        style="font-weight: 700; color: #4f46e5; font-size: 1.05rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2rem;">●</span> 본질적 질문 (Essential Questions)
                     </div>
                     <ul id="pdf-eq-list"
-                        style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6; font-size: 0.95rem; font-weight: 400;">
+                        style="margin: 0; padding-left: 22px; color: #334155; line-height: 1.7; font-size: 0.95rem; font-weight: 400;">
                     </ul>
                 </div>
 
                 <!-- Knowledge & Skills -->
-                <div>
+                <div class="pdf-item-group">
                     <div
-                        style="font-weight: 700; color: #4f46e5; font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        style="font-weight: 700; color: #4f46e5; font-size: 1.05rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2rem;">●</span> 주요 지식 및 기능 (Key Knowledge & Skills)
                     </div>
                     <div id="pdf-ks-list"
-                        style="font-size: 0.92rem; color: #475569; line-height: 1.6; padding-left: 5px;">
+                        style="font-size: 0.92rem; color: #475569; line-height: 1.7; padding-left: 5px;">
                         <!-- KS 데이터 주입 -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Step 2 Section -->
-        <div style="margin-bottom: 45px; width: 100%;">
+        <!-- Step 2 Section (Level 2 Header) -->
+        <div style="margin-bottom: 50px; width: 100%;">
             <h2
-                style="font-size: 1.3rem; font-weight: 700; color: #064e3b; background: #f0fdf4; padding: 8px 15px; border-left: 5px solid #10b981; margin-bottom: 20px;">
+                style="font-size: 1.35rem; font-weight: 700; color: #064e3b; background: #f0fdf4; padding: 10px 18px; border-left: 6px solid #10b981; border-top: 1px solid #dcfce7; border-right: 1px solid #dcfce7; border-bottom: 1px solid #dcfce7; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
                 Step 2. 수용 가능한 증거 (Evidence)
             </h2>
             <div style="padding: 0 5px;">
@@ -2933,10 +2934,10 @@
                         </tr>
                         <tr>
                             <th
-                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem; font-weight: 700;">
                                 Product</th>
                             <td id="pdf-grasps-p"
-                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; font-weight: 600; word-break: keep-all;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.95rem; font-weight: 400; word-break: keep-all; background: #f8fafc;">
                             </td>
                         </tr>
                         <tr>
@@ -2962,11 +2963,11 @@
             </div>
         </div>
 
-        <!-- Step 3 Section -->
+        <!-- Step 3 Section (Level 2 Header) -->
         <div class="html2pdf__page-break"></div>
-        <div style="margin-top: 25px; margin-bottom: 40px; width: 100%;">
+        <div style="margin-top: 25px; margin-bottom: 45px; width: 100%;">
             <h2
-                style="font-size: 1.3rem; font-weight: 700; color: #78350f; background: #fffbeb; padding: 8px 15px; border-left: 5px solid #f59e0b; margin-bottom: 20px;">
+                style="font-size: 1.35rem; font-weight: 700; color: #78350f; background: #fffbeb; padding: 10px 18px; border-left: 6px solid #f59e0b; border-top: 1px solid #fef3c7; border-right: 1px solid #fef3c7; border-bottom: 1px solid #fef3c7; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
                 Step 3. 학습 경험 및 수업 흐름 (Learning Plan)
             </h2>
             <div style="padding: 0 5px;">

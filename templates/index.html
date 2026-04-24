@@ -2592,8 +2592,24 @@
             document.getElementById('pdf-grasps-s').innerText = graspsData.situation || '-';
             document.getElementById('pdf-grasps-p').innerText = assessmentPlan.taskTypes.join(', ') + (assessmentPlan.customTaskType ? ` (${assessmentPlan.customTaskType})` : '');
 
-            // graspsData.standards는 이미 문자열이므로 .join()을 제거하여 런타임 에러 방지
+            // graspsData.standards는 이미 문자열이므로 .join() 없이 직접 주입
             document.getElementById('pdf-grasps-std').innerText = graspsData.standards || '-';
+
+            // [NEW] 지식 및 기능 매핑
+            const ksContainer = document.getElementById('pdf-ks-list');
+            if (ksContainer) {
+                const kTags = (ubdGoals.knowledge || []).map(t => `<span style="display:inline-block; border:1px solid #e2e8f0; padding:2px 8px; border-radius:4px; margin-right:5px; margin-bottom:5px; background:#f1f5f9;">[지식] ${t}</span>`).join('');
+                const sTags = (ubdGoals.skills || []).map(t => `<span style="display:inline-block; border:1px solid #e2e8f0; padding:2px 8px; border-radius:4px; margin-right:5px; margin-bottom:5px; background:#f8fafc;">[기능] ${t}</span>`).join('');
+                ksContainer.innerHTML = (kTags + sTags) || '추출된 지식 및 기능이 없습니다.';
+            }
+
+            // [NEW] 기대 효과 매핑
+            const expectedEl = document.getElementById('pdf-expected-effects');
+            if (expectedEl) {
+                expectedEl.innerText = ubdGoals.enduringUnderstanding ?
+                    `학생들은 본 프로젝트를 통해 "${ubdGoals.enduringUnderstanding}"라는 영속적 가치를 체득하고 실천적 역량을 함양할 것으로 기대됨.` :
+                    '교육과정 설계를 통한 체계적인 성취기준 달성 및 수업의 질 개선.';
+            }
 
             renderRubricTable();
             renderFlowTable();
@@ -2813,14 +2829,17 @@
             Edu-Navigator AI Curriculum Analysis Report
         </div>
 
-        <!-- Title -->
-        <div style="margin-bottom: 50px; text-align: center;">
+        <!-- Title Section -->
+        <div style="margin-bottom: 60px; text-align: center;">
             <h1 id="pdf-title"
-                style="font-size: 2.5rem; font-weight: 850; color: #0f172a; margin-bottom: 10px; word-break: keep-all; line-height: 1.2;">
+                style="font-size: 2.2rem; font-weight: 850; color: #0f172a; margin-bottom: 12px; word-break: keep-all; line-height: 1.2;">
             </h1>
-            <div style="width: 60px; height: 4px; background: #4f46e5; margin: 20px auto 10px auto;"></div>
-            <div style="width: 120px; height: 1px; background: #e2e8f0; margin: 0 auto;"></div>
-            <p style="margin-top: 15px; font-size: 1.1rem; color: #64748b; font-weight: 500;">백워드(UbD) 기반 교육과정 설계서</p>
+            <div style="font-size: 0.9rem; color: #64748b; font-weight: 500; margin-bottom: 25px;">
+                Education Architect: Baegot Raon Elementary School / AI Curriculum Design Support
+            </div>
+            <div style="width: 40px; height: 3px; background: #4f46e5; margin: 0 auto 15px auto;"></div>
+            <p style="font-size: 1.05rem; color: #475569; font-weight: 600; letter-spacing: 0.05em;">백워드(UbD) 기반 맞춤형
+                교육과정 설계서</p>
         </div>
 
         <!-- Step 1 Section -->
@@ -2830,23 +2849,38 @@
                 Step 1. 바라는 결과 (Desired Results)
             </h2>
             <div style="padding: 0 5px;">
-                <div style="margin-bottom: 18px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px;">
+                <!-- Enduring Understanding -->
+                <div style="margin-bottom: 22px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px;">
                     <div
-                        style="font-weight: 700; color: #475569; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #4f46e5;">●</span> 영속적 이해 (Enduring Understanding)
+                        style="font-weight: 700; color: #4f46e5; font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 1.2rem;">●</span> 영속적 이해 (Enduring Understanding)
                     </div>
                     <p id="pdf-eu"
-                        style="font-size: 1rem; color: #334155; line-height: 1.7; text-align: justify; word-break: keep-all;">
+                        style="font-size: 0.95rem; color: #334155; line-height: 1.6; text-align: justify; word-break: keep-all; font-weight: 400; background: #f8fafc; padding: 12px; border-radius: 6px;">
                     </p>
                 </div>
-                <div>
+
+                <!-- Essential Questions -->
+                <div style="margin-bottom: 22px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px;">
                     <div
-                        style="font-weight: 700; color: #475569; font-size: 0.95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #4f46e5;">●</span> 본질적 질문 (Essential Questions)
+                        style="font-weight: 700; color: #4f46e5; font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 1.2rem;">●</span> 본질적 질문 (Essential Questions)
                     </div>
                     <ul id="pdf-eq-list"
-                        style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.7; font-size: 0.95rem;">
+                        style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6; font-size: 0.95rem; font-weight: 400;">
                     </ul>
+                </div>
+
+                <!-- Knowledge & Skills -->
+                <div>
+                    <div
+                        style="font-weight: 700; color: #4f46e5; font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 1.2rem;">●</span> 주요 지식 및 기능 (Key Knowledge & Skills)
+                    </div>
+                    <div id="pdf-ks-list"
+                        style="font-size: 0.92rem; color: #475569; line-height: 1.6; padding-left: 5px;">
+                        <!-- KS 데이터 주입 -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -2953,6 +2987,19 @@
                     <tbody id="pdf-flow-body"></tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Expected Effects Section (New) -->
+        <div
+            style="margin-top: 40px; padding: 25px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <div
+                style="font-weight: 700; color: #4f46e5; font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.4rem;">●</span> 기대 효과 (Expected Effects)
+            </div>
+            <p id="pdf-expected-effects"
+                style="font-size: 1rem; color: #334155; line-height: 1.7; text-align: justify; word-break: keep-all; font-weight: 400; margin: 0; padding: 5px;">
+                <!-- 데이터 주입 -->
+            </p>
         </div>
 
         <!-- Footer Info -->

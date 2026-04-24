@@ -2595,21 +2595,26 @@
             // graspsData.standards는 이미 문자열이므로 .join() 없이 직접 주입
             document.getElementById('pdf-grasps-std').innerText = graspsData.standards || '-';
 
-            // [NEW] 지식 및 기능 매핑 (태그 간격 및 마진 정밀 조정)
+            // [NEW] 지식 및 기능 매핑 (지식/기능 분리 및 시각 위계 강화)
             const ksContainer = document.getElementById('pdf-ks-list');
             if (ksContainer) {
-                const kTags = (ubdGoals.knowledge || []).map(t => `<span style="display:inline-block; border:1px solid #cbd5e1; padding:3px 10px; border-radius:6px; margin-right:8px; margin-bottom:8px; background:#f1f5f9; color:#1e293b; font-size:0.85rem; font-weight:400;">[지식] ${t}</span>`).join('');
-                const sTags = (ubdGoals.skills || []).map(t => `<span style="display:inline-block; border:1px solid #cbd5e1; padding:3px 10px; border-radius:6px; margin-right:8px; margin-bottom:8px; background:#ffffff; color:#1e293b; font-size:0.85rem; font-weight:400;">[기능] ${t}</span>`).join('');
-                ksContainer.innerHTML = (kTags + sTags) || '추출된 지식 및 기능이 없습니다.';
+                const kSection = (ubdGoals.knowledge || []).length > 0 ?
+                    `<div style="margin-bottom:12px;"><strong style="color:#475569; display:block; margin-bottom:6px; font-size:0.85rem;">[주요 지식]</strong>` +
+                    (ubdGoals.knowledge || []).map(t => `<span style="display:inline-block; border:1px solid #cbd5e1; padding:3px 10px; border-radius:6px; margin-right:8px; margin-bottom:8px; background:#f1f5f9; color:#1e293b; font-size:0.85rem; font-weight:400;">${t}</span>`).join('') + `</div>` : '';
+
+                const sSection = (ubdGoals.skills || []).length > 0 ?
+                    `<div><strong style="color:#475569; display:block; margin-bottom:6px; font-size:0.85rem;">[주요 기능]</strong>` +
+                    (ubdGoals.skills || []).map(t => `<span style="display:inline-block; border:1px solid #cbd5e1; padding:3px 10px; border-radius:6px; margin-right:8px; margin-bottom:8px; background:#ffffff; color:#1e293b; font-size:0.85rem; font-weight:400;">${t}</span>`).join('') + `</div>` : '';
+
+                ksContainer.innerHTML = (kSection + sSection) || '추출된 지식 및 기능이 없습니다.';
             }
 
-            // [NEW] 기대 효과 매핑 (본문용 폰트 위계 적용)
+            // [NEW] 기대 효과 매핑 (라벨:본문 위계 일원화 및 굵기 Normal 강제)
             const expectedEl = document.getElementById('pdf-expected-effects');
             if (expectedEl) {
-                expectedEl.style.fontWeight = "400"; // 본문용 Normal weight 강제
-                expectedEl.innerText = ubdGoals.enduringUnderstanding ?
-                    `학생들은 이번 프로젝트를 통해 "${ubdGoals.enduringUnderstanding}"라는 영속적 가치를 내면화하고, 수업 과정에서 습득한 지식과 기능을 통합하여 실생활 맥락에서 문제를 해결하는 창의적 역량을 함양할 것으로 기대함.` :
-                    '교육과정 설계를 통한 체계적인 성취기준 달성 및 수업의 질 개선.';
+                expectedEl.innerHTML = ubdGoals.enduringUnderstanding ?
+                    `<strong style="color:#1e293b;">기대 효과:</strong> <span style="font-weight:400; color:#334155;">학생들은 이번 프로젝트를 통해 "${ubdGoals.enduringUnderstanding}"라는 영속적 가치를 내면화하고, 수업 과정에서 습득한 지식과 기능을 통합하여 실생활 맥락에서 문제를 해결하는 창의적 역량을 함양할 것으로 기대함.</span>` :
+                    '<strong style="color:#1e293b;">기대 효과:</strong> <span style="font-weight:400; color:#334155;">교육과정 설계를 통한 체계적인 성취기준 달성 및 수업의 질 개선.</span>';
             }
 
             renderRubricTable();
@@ -2851,9 +2856,10 @@
             </h2>
             <div style="padding: 0 5px;">
                 <!-- Enduring Understanding (Level 3 Label + Level 4 Body) -->
-                <div class="pdf-item-group" style="margin-bottom: 28px;">
+                <div class="pdf-item-group"
+                    style="margin-bottom: 28px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
                     <div
-                        style="font-weight: 700; color: #4f46e5; font-size: 1.05rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        style="font-weight: 700; color: #4f46e5; font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2rem;">●</span> 영속적 이해 (Enduring Understanding)
                     </div>
                     <p id="pdf-eu"
@@ -2862,9 +2868,10 @@
                 </div>
 
                 <!-- Essential Questions -->
-                <div class="pdf-item-group" style="margin-bottom: 28px;">
+                <div class="pdf-item-group"
+                    style="margin-bottom: 28px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
                     <div
-                        style="font-weight: 700; color: #4f46e5; font-size: 1.05rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        style="font-weight: 700; color: #4f46e5; font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2rem;">●</span> 본질적 질문 (Essential Questions)
                     </div>
                     <ul id="pdf-eq-list"
@@ -2873,9 +2880,9 @@
                 </div>
 
                 <!-- Knowledge & Skills -->
-                <div class="pdf-item-group">
+                <div class="pdf-item-group" style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
                     <div
-                        style="font-weight: 700; color: #4f46e5; font-size: 1.05rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        style="font-weight: 700; color: #4f46e5; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2rem;">●</span> 주요 지식 및 기능 (Key Knowledge & Skills)
                     </div>
                     <div id="pdf-ks-list"
@@ -2902,50 +2909,50 @@
                         style="width: 100%; border-collapse: collapse; table-layout: fixed; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
                         <tr>
                             <th width="100"
-                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #1e293b; text-align: center; font-size: 0.85rem; font-weight: 700;">
                                 Goal</th>
                             <td id="pdf-grasps-g"
-                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all; text-align: justify;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #334155; font-size: 0.95rem; font-weight: 400; word-break: keep-all; text-align: justify;">
                             </td>
                         </tr>
                         <tr>
                             <th
-                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #1e293b; text-align: center; font-size: 0.85rem; font-weight: 700;">
                                 Role</th>
                             <td id="pdf-grasps-r"
-                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #334155; font-size: 0.95rem; font-weight: 400; word-break: keep-all;">
                             </td>
                         </tr>
                         <tr>
                             <th
-                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #1e293b; text-align: center; font-size: 0.85rem; font-weight: 700;">
                                 Audience</th>
                             <td id="pdf-grasps-a"
-                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #334155; font-size: 0.95rem; font-weight: 400; word-break: keep-all;">
                             </td>
                         </tr>
                         <tr>
                             <th
-                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #1e293b; text-align: center; font-size: 0.85rem; font-weight: 700;">
                                 Situation</th>
                             <td id="pdf-grasps-s"
-                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all; text-align: justify;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #334155; font-size: 0.95rem; font-weight: 400; word-break: keep-all; text-align: justify;">
                             </td>
                         </tr>
                         <tr>
                             <th
-                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem; font-weight: 700;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #1e293b; text-align: center; font-size: 0.85rem; font-weight: 700;">
                                 Product</th>
                             <td id="pdf-grasps-p"
-                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.95rem; font-weight: 400; word-break: keep-all; background: #f8fafc;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1e293b; font-size: 0.95rem; font-weight: 700; word-break: keep-all; background: #f8fafc; border-left: 4px solid #10b981;">
                             </td>
                         </tr>
                         <tr>
                             <th
-                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #1e293b; text-align: center; font-size: 0.85rem; font-weight: 700;">
                                 Standards</th>
                             <td id="pdf-grasps-std"
-                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all; text-align: justify;">
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #334155; font-size: 0.95rem; font-weight: 400; word-break: keep-all; text-align: justify;">
                             </td>
                         </tr>
                     </table>

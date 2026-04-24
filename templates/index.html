@@ -2502,35 +2502,82 @@
         }
 
         function exportToPDF() {
-            const element = document.getElementById('flow-board');
-            if (!element || lessonFlow.length === 0) {
-                showToast("출력할 차시 데이터가 없습니다.", "error"); return;
+            const template = document.getElementById('pdf-export-template');
+            if (!template) return;
+
+            showToast("PDF 문서를 생성 중입니다. 잠시만 기다려 주세요.", "info");
+
+            // 1. 데이터 동적 렌더링
+            document.getElementById('pdf-title').innerText = currentPrompt || 'Edu-Navigator 교육과정 설계서';
+            document.getElementById('pdf-eu').innerText = ubdGoals.enduringUnderstanding || '-';
+
+            const eqList = document.getElementById('pdf-eq-list');
+            eqList.innerHTML = ubdGoals.essentialQuestions.length > 0 ?
+                ubdGoals.essentialQuestions.map(q => `<li>${q}</li>`).join('') : '<li>설정된 본질적 질문이 없습니다.</li>';
+
+            const graspsData = getGRASPSData();
+            document.getElementById('pdf-grasps-g').innerText = graspsData.goal || '-';
+            document.getElementById('pdf-grasps-r').innerText = graspsData.role || '-';
+            document.getElementById('pdf-grasps-a').innerText = graspsData.audience || '-';
+            document.getElementById('pdf-grasps-s').innerText = graspsData.situation || '-';
+            document.getElementById('pdf-grasps-p').innerText = assessmentPlan.taskTypes.join(', ') + (assessmentPlan.customTaskType ? ` (${assessmentPlan.customTaskType})` : '');
+
+            // 루브릭 테이블 렌더링
+            const rubricTable = document.getElementById('pdf-rubric-table');
+            const rubricData = assessmentPlan.rubric || [];
+            if (rubricData.length > 0) {
+                let headers = ['평가 항목', ...rubricLevels];
+                rubricTable.innerHTML = `
+                    <thead>
+                        <tr style="background:#f2f2f2">
+                            ${headers.map(h => `<th style="padding:8px; border:1px solid #ddd; text-align:center; font-size:0.9rem">${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rubricData.map(r => `
+                            <tr>
+                                <td style="padding:8px; border:1px solid #ddd; font-weight:bold; font-size:0.85rem; background:#fafafa">${r.name}</td>
+                                ${rubricLevels.map(l => `<td style="padding:8px; border:1px solid #ddd; font-size:0.85rem">${r.levels[l] || ''}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+            } else {
+                rubricTable.innerHTML = '<tr><td style="padding:20px; text-align:center; border:1px solid #ddd">작성된 루브릭 데이터가 없습니다.</td></tr>';
             }
 
-            showToast("PDF 생성을 준비 중입니다. 잠시만 기다려 주세요...");
-            const originalBoardBg = element.style.background;
-            const originalBoardMaxHeight = element.style.maxHeight;
-            const originalBoardOverflow = element.style.overflow;
+            // 수업 흐름 테이블 렌더링
+            const flowBody = document.getElementById('pdf-flow-body');
+            if (lessonFlow.length > 0) {
+                flowBody.innerHTML = lessonFlow.map(l => `
+                    <tr>
+                        <td style="text-align:center; padding:8px; border:1px solid #ddd; font-weight:bold">${l.id}</td>
+                        <td style="padding:8px; border:1px solid #ddd; font-weight:bold; background:#fafafa">${l.title}</td>
+                        <td style="padding:8px; border:1px solid #ddd; font-size:0.85rem; line-height:1.5">${l.content.replace(/\n/g, '<br>')}</td>
+                    </tr>
+                `).join('');
+            } else {
+                flowBody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; border:1px solid #ddd">작성된 수업 흐름이 없습니다.</td></tr>';
+            }
 
-            // PDF가 잘리지 않도록 임시 세팅
-            element.style.background = "#0f172a";
-            element.style.maxHeight = 'none';
-            element.style.overflow = 'visible';
-
-            var opt = {
-                margin: 10,
-                filename: 'whereto_lesson_plan.pdf',
+            // 2. PDF 파일 생성 및 다운로드 (html2pdf)
+            template.style.display = 'block'; // 잠시 표시
+            const opt = {
+                margin: [15, 15],
+                filename: `${currentPrompt || 'Edu_Navigator'}_설계서.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            html2pdf().set(opt).from(element).save().then(() => {
-                // Restoration
-                element.style.background = originalBoardBg;
-                element.style.maxHeight = originalBoardMaxHeight;
-                element.style.overflow = originalBoardOverflow;
-                showToast("✅ 다운로드 성공!");
+            html2pdf().set(opt).from(template).save().then(() => {
+                template.style.display = 'none'; // 다시 숨김
+                showToast("✅ PDF 설계서 다운로드 성공!", "success");
+            }).catch(err => {
+                console.error("PDF 생성 오류:", err);
+                template.style.display = 'none';
+                showToast("PDF 생성 중 오류가 발생했습니다.", "error");
             });
         }
 
@@ -2642,6 +2689,92 @@
                     <button class="btn btn-primary" id="confirm-ok"
                         style="width:120px;background:#ef4444;border-color:#ef4444;box-shadow:0 0 15px rgba(239, 68, 68, 0.3)">삭제</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Export Hidden Template (A4 Printing) -->
+    <div id="pdf-export-template"
+        style="display: none; background: white; color: #333; padding: 25mm 20mm; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; line-height: 1.6;">
+        <div style="text-align: right; font-size: 0.8rem; color: #666; margin-bottom: 30px;">Edu-Navigator AI Curriculum
+            Designer</div>
+
+        <h1 id="pdf-title"
+            style="text-align: center; font-size: 2.2rem; font-weight: 800; border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 40px; color: #000;">
+        </h1>
+
+        <div style="margin-bottom: 35px;">
+            <h2
+                style="font-size: 1.4rem; border-left: 6px solid #4f46e5; padding-left: 12px; margin-bottom: 15px; color: #1e1b4b; background: #f8fafc; padding-top: 5px; padding-bottom: 5px;">
+                Step 1. 바라는 결과 (Desired Results)</h2>
+            <div style="padding-left: 10px;">
+                <p style="margin-bottom: 10px;"><strong>영속적 이해 (EU):</strong> <span id="pdf-eu"></span></p>
+                <p style="margin-bottom: 5px;"><strong>본질적 질문 (EQ):</strong></p>
+                <ul id="pdf-eq-list" style="margin-top: 0; padding-left: 25px;"></ul>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 35px;">
+            <h2
+                style="font-size: 1.4rem; border-left: 6px solid #10b981; padding-left: 12px; margin-bottom: 15px; color: #064e3b; background: #f0fdf4; padding-top: 5px; padding-bottom: 5px;">
+                Step 2. 수용 가능한 증거 (Evidence)</h2>
+            <div style="padding-left: 10px;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 10px; color: #333;">■ GRASPS 수행과제 시나리오</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; table-layout: fixed;">
+                    <tr>
+                        <th width="100"
+                            style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">Goal
+                        </th>
+                        <td id="pdf-grasps-g" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">Role
+                        </th>
+                        <td id="pdf-grasps-r" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
+                            Audience</th>
+                        <td id="pdf-grasps-a" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
+                            Situation</th>
+                        <td id="pdf-grasps-s" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="padding: 10px; border: 1px solid #ddd; background: #f9fafb; text-align: center;">
+                            Product</th>
+                        <td id="pdf-grasps-p" style="padding: 10px; border: 1px solid #ddd; word-break: break-all;">
+                        </td>
+                    </tr>
+                </table>
+
+                <h3 style="font-size: 1.1rem; margin-bottom: 10px; color: #333;">■ 수행평가 루브릭 (채점 기준)</h3>
+                <table id="pdf-rubric-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                </table>
+            </div>
+        </div>
+
+        <div style="page-break-before: always; margin-bottom: 35px;">
+            <h2
+                style="font-size: 1.4rem; border-left: 6px solid #f59e0b; padding-left: 12px; margin-bottom: 15px; color: #78350f; background: #fffbeb; padding-top: 5px; padding-bottom: 5px;">
+                Step 3. 학습 경험 및 수업 계획 (Learning Plan)</h2>
+            <div style="padding-left: 10px;">
+                <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                    <thead>
+                        <tr style="background: #f9fafb;">
+                            <th width="50" style="padding: 10px; border: 1px solid #ddd; text-align: center;">차시</th>
+                            <th width="160" style="padding: 10px; border: 1px solid #ddd; text-align: center;">주제</th>
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">주요 학습 활동 및 수업 흐름</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdf-flow-body"></tbody>
+                </table>
             </div>
         </div>
     </div>

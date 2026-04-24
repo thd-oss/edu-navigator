@@ -2080,7 +2080,7 @@
             container.innerHTML = Array.from(found).map(type => `
             <div class="subject-chip task-type-chip" data-type="${type}" onclick="toggleTaskType(this,'${type.replace(/'/g, "\\'")}')">${type}</div>
         `).join('') + `<div id="custom-task-input-wrap" style="display:none;margin-top:0.7rem;width:100%">
-            <input id="custom-task-input" type="text" placeholder="수행과제 유형 직접 입력" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem" oninput="assessmentPlan.customTaskType=this.value">
+            <textarea id="custom-task-input" placeholder="수행과제 유형 직접 입력" style="width:100%;min-height:60px;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem;resize:vertical" oninput="assessmentPlan.customTaskType=this.value" onblur="saveAppState()" ondblclick="openEditor(this, '평가 유형 직접 입력')"></textarea>
         </div>`;
             assessmentPlan.taskTypes = [];
             lucide.createIcons();

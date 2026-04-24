@@ -959,6 +959,29 @@
                         placeholder="예: '환경 보호와 기후 위기'를 주제로 3학년 국어 및 사회 교과를 융합한 10차시 프로젝트를 설계해줘."></textarea>
                     <p id="prompt-error" style="color:var(--warning);font-size:0.85rem;display:none">아이디어를 먼저 입력해 주세요.
                     </p>
+
+                    <!-- [NEW] AI 요약 제목 배너 -->
+                    <div id="ai-title-banner"
+                        style="display:none; margin-top:1.5rem; padding:1.2rem; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2); border-radius:12px; animation:fadeIn 0.5s ease;">
+                        <div style="display:flex; align-items:center; justify-content:space-between">
+                            <div style="display:flex; align-items:center; gap:0.8rem">
+                                <div
+                                    style="width:32px; height:32px; background:var(--primary); border-radius:8px; display:flex; align-items:center; justify-content:center">
+                                    <i data-lucide="sparkles" style="width:16px; height:16px; color:white"></i>
+                                </div>
+                                <div>
+                                    <div
+                                        style="font-size:0.7rem; color:var(--primary-light); font-weight:700; text-transform:uppercase; letter-spacing:1px">
+                                        AI Recommended Title</div>
+                                    <div id="display-summary-title"
+                                        style="font-size:1.1rem; font-weight:700; color:white"></div>
+                                </div>
+                            </div>
+                            <button onclick="summarizeTitle('cloud')" class="btn-retry" title="다시 요약">
+                                <i data-lucide="refresh-cw" style="width:14px; height:14px"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 데이터 로드 + 교과 선택 -->
@@ -1283,7 +1306,7 @@
         let selectedSubjects = ['국어', '사회'];
         let currentPrompt = '';
         let selectedStandardIds = []; // Layer 1에서 매핑
-        let ubdGoals = { enduringUnderstanding: '', essentialQuestions: [], knowledge: [], skills: [] };
+        let ubdGoals = { summaryTitle: '', enduringUnderstanding: '', essentialQuestions: [], knowledge: [], skills: [] };
         let assessmentPlan = { grasps: {}, taskTypes: [], customTaskType: '', rubric: [] };
         let lessonFlow = [];
         let iepData = {}; // key: lessonId, value: text
@@ -1959,7 +1982,35 @@
         }
 
         // ═══════════════════════════════════════
-        // 6. 영속적 이해 & 본질적 질문 AI 추천
+        // 6. AI 제목 요약 및 위계 관리 (New)
+        // ═══════════════════════════════════════
+        async function summarizeTitle(engine = 'local') {
+            const topic = document.getElementById('prompt-input').value.trim();
+            if (!topic) return;
+
+            try {
+                const aiData = await requestAIAction("SUMMARIZE_TITLE", { topic }, engine);
+                ubdGoals.summaryTitle = aiData.title || (typeof aiData === 'string' ? aiData : topic.substring(0, 15));
+                updateSummaryTitleUI();
+            } catch (e) {
+                console.error("Title Summarization Failed:", e);
+                // Fallback: Use sliced original prompt
+                ubdGoals.summaryTitle = topic.substring(0, 15) + (topic.length > 15 ? '...' : '');
+                updateSummaryTitleUI();
+            }
+        }
+
+        function updateSummaryTitleUI() {
+            const banner = document.getElementById('ai-title-banner');
+            const display = document.getElementById('display-summary-title');
+            if (ubdGoals.summaryTitle && banner && display) {
+                display.innerText = ubdGoals.summaryTitle;
+                banner.style.display = 'block';
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // 7. 영속적 이해 & 본질적 질문 AI 추천
         // ═══════════════════════════════════════
         async function suggestEU(engine = 'local') {
             const stds = curriculumDB.filter(d => selectedStandardIds.includes(d.id));
@@ -1970,6 +2021,9 @@
 
             const btnId = engine === 'local' ? "euBtnLocal" : "euBtnCloud";
             try {
+                // 제목 요약이 안 되어 있으면 먼저 수행
+                if (!ubdGoals.summaryTitle) summarizeTitle(engine);
+
                 const ctx = buildLayer1Context();
                 const aiData = await requestAIAction("RECOMMEND_EU", ctx, engine, btnId);
 
@@ -1994,6 +2048,9 @@
 
             const btnId = engine === 'local' ? "eqBtnLocal" : "eqBtnCloud";
             try {
+                // 제목 요약이 안 되어 있으면 먼저 수행
+                if (!ubdGoals.summaryTitle) summarizeTitle(engine);
+
                 const ctx = buildLayer1Context();
                 const aiData = await requestAIAction("RECOMMEND_EQ", ctx, engine, btnId);
 
@@ -2578,7 +2635,13 @@
                 .replace(/\s+/g, '_')
                 .substring(0, 20);
 
-            document.getElementById('pdf-title').innerText = currentPrompt || 'Edu-Navigator 교육과정 설계서';
+            // 요약 제목 주입 (Fallback: 원본 일부 절삭)
+            const summaryTitle = ubdGoals.summaryTitle || (currentPrompt ? currentPrompt.substring(0, 20) + (currentPrompt.length > 20 ? '...' : '') : 'Edu-Navigator 교육과정 설계서');
+            document.getElementById('pdf-title').innerText = summaryTitle;
+
+            // 원본 주제 설명 주입 (이탤릭체 영역)
+            const pdfDesc = document.getElementById('pdf-project-desc');
+            if (pdfDesc) pdfDesc.innerText = currentPrompt || '-';
             document.getElementById('pdf-eu').innerText = ubdGoals.enduringUnderstanding || '-';
 
             const eqList = document.getElementById('pdf-eq-list');
@@ -2838,8 +2901,11 @@
         <!-- Title Section (Level 1) -->
         <div style="margin-bottom: 60px; text-align: center;">
             <h1 id="pdf-title"
-                style="font-size: 2.4rem; font-weight: 850; color: #0f172a; margin-bottom: 12px; word-break: keep-all; line-height: 1.2;">
+                style="font-size: 2.4rem; font-weight: 850; color: #0f172a; margin-bottom: 5px; word-break: keep-all; line-height: 1.2;">
             </h1>
+            <div id="pdf-project-desc"
+                style="font-style: italic; color: #64748b; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; max-width: 85%; margin-left: auto; margin-right: auto; word-break: keep-all;">
+            </div>
             <div style="font-size: 0.95rem; color: #64748b; font-weight: 500; margin-bottom: 25px;">
                 Education Architect: Baegot Raon Elementary School / UbD AI Design Protocol
             </div>

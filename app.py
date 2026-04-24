@@ -318,7 +318,8 @@ def build_prompt(task_type, payload, persona):
         "RECOMMEND_KSA": f"{persona}지식과 기능을 추출하여 JSON(knowledge, skill 배열)으로 반환해.{json_instr}\n{context}",
         "RECOMMEND_GRASPS": f"{persona}다음 성취기준과 주제를 바탕으로 백워드 설계의 GRASPS 수행과제 시나리오를 작성해 줘. JSON 형식(goal, role, audience, situation, product 필드)으로 반환해.{json_instr}\n{context}",
         "COMPLEX_PLANNING": f"{persona}다음 맥락을 바탕으로 체계적인 수업 흐름을 설계해 주십시오.\n\n[핵심 지침]\n- 사용자가 요청한 총 차시는 {payload.get('lessonCount', '6~8')}차시입니다. \n- 반드시 1차시부터 {payload.get('lessonCount', '6~8')}차시까지의 내용만 생성하세요.\n- 시수가 부족하거나 넘치지 않게 전체 교육과정의 호흡을 조절하여 배분하세요.\n- 백워드 설계의 WHERETO 원칙을 각 차시에 적절히 녹여내야 합니다.\n\n[상세 기술 지침]\n1. 각 차시는 단계(phase), 제목(title), 상세설명(desc), WHERETO 요소 배열(whereto), 연관 루브릭 항목(rubricLinks)을 포함해야 합니다.\n2. WHERETO 요소는 ['W','H','E','R','E2','T','O'] 중 해당 차시의 성격과 맞는 기호를 선택하십시오.\n3. rubricLinks는 제공된 평가 루브릭의 항목명들을 참고하여 연관된 것을 나열하십시오.\n4. 반드시 JSON 배열 형식으로만 응답해 주십시오.{json_instr}\n\n[주제]: {payload.get('topic','')}\n[성취기준]: {payload.get('stds','')}\n[영속적 이해]: {payload.get('eu','')}\n[GRASPS 시나리오]: {json.dumps(payload.get('grasps',{}), ensure_ascii=False)}\n[평가 루브릭]: {json.dumps(payload.get('rubric',[]), ensure_ascii=False)}",
-        "RUBRIC": f"{persona}다음 GRASPS 시나리오와 맥락을 분석하여, 학생의 성취도를 정밀하게 판별할 수 있는 루브릭(평가 기준)을 3~4개 항목으로 제안해 줘.\n\n[작성 지침]\n1. 반드시 JSON 배열로만 반환해.\n2. 배열의 각 객체는 '항목명', '매우잘함', '잘함', '보통', '노력요함' 5개 필드를 반드시 포함해야 함.\n3. '항목명'은 '내용의 타당성', '창의적 표현' 등 구체적인 평가 요소를 사용해.\n4. '매우잘함', '잘함', '보통', '노력요함' 각 필드의 값은 해당 수준의 학생 수행 특징을 1~2문장으로 구체적으로 기술해.\n\n출력 예시:\n[\n  {{\"항목명\": \"내용의 타당성\", \"매우잘함\": \"학생이...\", \"잘함\": \"...\", \"보통\": \"...\", \"노력요함\": \"...\"}},\n  {{\"항목명\": \"창의적 표현\", \"매우잘함\": \"...\", ...}}\n]\n\n시나리오 데이터: {json.dumps(payload.get('grasps',{}), ensure_ascii=False)}\n{context}"
+        "RUBRIC": f"{persona}다음 GRASPS 시나리오와 맥락을 분석하여, 학생의 성취도를 정밀하게 판별할 수 있는 루브릭(평가 기준)을 3~4개 항목으로 제안해 줘.\n\n[작성 지침]\n1. 반드시 JSON 배열로만 반환해.\n2. 배열의 각 객체는 '항목명', '매우잘함', '잘함', '보통', '노력요함' 5개 필드를 반드시 포함해야 함.\n3. '항목명'은 '내용의 타당성', '창의적 표현' 등 구체적인 평가 요소를 사용해.\n4. '매우잘함', '잘함', '보통', '노력요함' 각 필드의 값은 해당 수준의 학생 수행 특징을 1~2문장으로 구체적으로 기술해.\n\n출력 예시:\n[\n  {{\"항목명\": \"내용의 타당성\", \"매우잘함\": \"학생이...\", \"잘함\": \"...\", \"보통\": \"...\", \"노력요함\": \"...\"}},\n  {{\"항목명\": \"창의적 표현\", \"매우잘함\": \"...\", ...}}\n]\n\n시나리오 데이터: {json.dumps(payload.get('grasps',{}), ensure_ascii=False)}\n{context}",
+        "SUMMARIZE_TITLE": f"{persona}다음 프로젝트 주제를 분석하여, 문서의 제목으로 사용하기에 적합한 10자 내외의 짧고 매력적인 제목을 단 하나만 생성해 줘.\n\n[작성 지침]\n- 반드시 10자 내외(최대 15자)로 작성할 것.\n- 명사형으로 종결할 것 (예: ~의 탐구, ~ 프로젝트).\n- 불필요한 수식어는 제거하고 핵심 키워드 중심으로 구성할 것.\n- 반드시 JSON 형식(`{{\"title\": \"요약된 제목\"}}`)으로만 응답할 것.\n\n[프로젝트 주제]: {payload.get('topic','')}"
     }
     return prompts.get(task_type, f"{persona}요청을 처리해 줘.")
 
@@ -382,6 +383,8 @@ def get_schema(task_type):
                 "required": ["항목명", "매우잘함", "잘함", "보통", "노력요함"]
             }
         }
+    if task_type == 'SUMMARIZE_TITLE':
+        return {"type": "object", "properties": {"title": {"type": "string"}}, "required": ["title"]}
     return {"type": "object"}
 
 if __name__ == '__main__':

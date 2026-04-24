@@ -2553,7 +2553,7 @@
                     <tr>
                         <td style="text-align:center; padding:8px; border:1px solid #ddd; font-weight:bold">${l.id}</td>
                         <td style="padding:8px; border:1px solid #ddd; font-weight:bold; background:#fafafa">${l.title}</td>
-                        <td style="padding:8px; border:1px solid #ddd; font-size:0.85rem; line-height:1.5">${l.content.replace(/\n/g, '<br>')}</td>
+                        <td style="padding:8px; border:1px solid #ddd; font-size:0.85rem; line-height:1.5">${(l.desc || '').replace(/\n/g, '<br>')}</td>
                     </tr>
                 `).join('');
             } else {
@@ -2561,10 +2561,16 @@
             }
 
             // 2. PDF 파일 생성 및 다운로드 (html2pdf)
-            template.style.display = 'block'; // 잠시 표시
+            // 파일명에 사용할 수 없는 특수문자/줄바꿈 제거 및 길이 제한
+            const safeTitle = (currentPrompt || 'Edu_Navigator')
+                .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
+                .trim()
+                .replace(/\s+/g, '_')
+                .substring(0, 20);
+
             const opt = {
                 margin: [15, 15],
-                filename: `${currentPrompt || 'Edu_Navigator'}_설계서.pdf`,
+                filename: `${safeTitle}_설계서.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },

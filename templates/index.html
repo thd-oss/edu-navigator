@@ -1074,10 +1074,12 @@
                     </div>
                 </div>
 
-                <button id="start-btn" class="btn btn-primary" style="width:100%;justify-content:center;height:60px"
-                    onclick="goToEvidence()">
-                    <i data-lucide="arrow-right"></i> 2단계: 수용 가능한 증거 결정하기
-                </button>
+                <div class="step-navigation"
+                    style="display:flex; justify-content:flex-end; align-items:center; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--glass-border);">
+                    <button id="start-btn" class="btn btn-primary" onclick="goToEvidence()">
+                        2단계: 수용 가능한 증거 결정하기 <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1178,20 +1180,24 @@
                 <div id="rubric-builder"><!-- JS Inject --></div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;gap:1rem">
+            <div class="step-navigation"
+                style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--glass-border);">
                 <button class="btn" style="background:rgba(255,255,255,0.05);color:var(--text-dim)"
-                    onclick="switchLayer(1)"><i data-lucide="arrow-left"></i> 이전 단계</button>
-                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center">
+                    onclick="switchLayer(1)">
+                    <i data-lucide="arrow-left"></i> 1단계로
+                </button>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end">
                     <button class="btn" style="background:rgba(255,255,255,0.05);color:var(--text-dim)"
-                        onclick="switchLayer(3)"><i data-lucide="edit-3"></i> 3단계: 직접 설계하기 (추천)</button>
+                        onclick="switchLayer(3)">
+                        <i data-lucide="edit-3"></i> 3단계 직접 설계
+                    </button>
                     <button id="flowBtnLocal" class="btn"
                         style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.1)"
                         onclick="generateFlowFromAssessment('local')">
                         <i data-lucide="cpu" style="width:16px;height:16px"></i> 무료 AI 분석
                     </button>
                     <button id="flowBtnCloud" class="btn btn-primary" onclick="generateFlowFromAssessment('cloud')">
-                        <i data-lucide="sparkles" style="width:16px;height:16px"></i> 유료 AI 설계 <i
-                            data-lucide="arrow-right"></i>
+                        유료 AI 설계 <i data-lucide="sparkles" style="width:16px;height:16px"></i>
                     </button>
                 </div>
             </div>
@@ -1226,11 +1232,22 @@
                 </div>
             </div>
             <div class="flow-container" id="flow-board"><!-- JS Inject --></div>
-            <div style="margin-top:3rem;display:flex;justify-content:space-between;align-items:center">
-                <button class="btn btn-outline" style="padding:0.6rem 1.2rem;font-size:0.9rem"
-                    onclick="saveAppState(); alert('중간 저장이 완료되었습니다.')"><i data-lucide="save"></i> 임시 자동 저장</button>
-                <button class="btn btn-primary" style="padding:0.6rem 1.2rem;font-size:0.9rem"
-                    onclick="exportToPDF()"><i data-lucide="download"></i> 결과물 내보내기 (PDF)</button>
+            <div class="step-navigation"
+                style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--glass-border);">
+                <button class="btn" style="background:rgba(255,255,255,0.05);color:var(--text-dim)"
+                    onclick="switchLayer(2)">
+                    <i data-lucide="arrow-left"></i> 2단계로
+                </button>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="btn btn-outline" style="padding:0.6rem 1.2rem;font-size:0.9rem"
+                        onclick="saveAppState(); showToast('임시 저장이 완료되었습니다.');">
+                        <i data-lucide="save"></i> 임시 저장
+                    </button>
+                    <button class="btn btn-primary" style="padding:0.6rem 1.2rem;font-size:0.9rem"
+                        onclick="exportToPDF()">
+                        <i data-lucide="download"></i> PDF 내보내기
+                    </button>
+                </div>
             </div>
         </div>
     </main>
@@ -1320,6 +1337,7 @@
 
         // [로컬 최적화] 상태 영속성 유지 로직 (localStorage)
         function saveAppState() {
+            assessmentPlan.rubric = getRubricData();
             const state = {
                 selectedStandardIds,
                 ubdGoals,
@@ -2080,7 +2098,7 @@
             container.innerHTML = Array.from(found).map(type => `
             <div class="subject-chip task-type-chip" data-type="${type}" onclick="toggleTaskType(this,'${type.replace(/'/g, "\\'")}')">${type}</div>
         `).join('') + `<div id="custom-task-input-wrap" style="display:none;margin-top:0.7rem;width:100%">
-            <textarea id="custom-task-input" placeholder="수행과제 유형 직접 입력" style="width:100%;min-height:60px;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem;resize:vertical" oninput="assessmentPlan.customTaskType=this.value" onblur="saveAppState()" ondblclick="openEditor(this, '평가 유형 직접 입력')"></textarea>
+            <textarea id="custom-task-input" placeholder="수행과제 유형 직접 입력" style="width:100%;min-height:60px;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem;resize:vertical" oninput="assessmentPlan.customTaskType=this.value; saveAppState();" ondblclick="openEditor(this, '평가 유형 직접 입력')"></textarea>
         </div>`;
             assessmentPlan.taskTypes = [];
             lucide.createIcons();
@@ -2121,8 +2139,8 @@
             const rowId = 'rr-' + Date.now() + Math.random();
             const div = document.createElement('div'); div.id = rowId;
             div.style.cssText = `display:grid;grid-template-columns:160px ${rubricLevels.map(() => '1fr').join(' ')} auto auto;gap:0.5rem;margin-bottom:0.5rem;align-items:center`;
-            const lvls = rubricLevels.map(l => `<input placeholder="${l}" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.78rem;width:100%" onclick="openEditor(this, '${l} 수준 기술어')">`).join('');
-            div.innerHTML = `<input value="${defaultName}" placeholder="평가 항목명" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.82rem;width:100%" onclick="openEditor(this, '평가 항목명')">${lvls}<span></span>
+            const lvls = rubricLevels.map(l => `<input placeholder="${l}" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.78rem;width:100%" onclick="openEditor(this, '${l} 수준 기술어')" oninput="saveAppState()">`).join('');
+            div.innerHTML = `<input value="${defaultName}" placeholder="평가 항목명" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;padding:0.4rem 0.6rem;color:white;font-size:0.82rem;width:100%" onclick="openEditor(this, '평가 항목명')" oninput="saveAppState()">${lvls}<span></span>
             <button onclick="document.getElementById('${rowId}').remove()" style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.3);color:#f87171;border-radius:8px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.75rem">✕</button>`;
             builder.appendChild(div);
         }

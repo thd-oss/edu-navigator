@@ -1,0 +1,6 @@
+Flask
+pandas
+pdfplumber
+google-generativeai
+requests
+openpyxl

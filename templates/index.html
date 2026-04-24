@@ -2521,12 +2521,11 @@
             const template = document.getElementById('pdf-export-template');
             if (!template) return;
 
-            showLoader("격리 렌더링 프로토콜을 통해 고정밀 PDF를 생성 중입니다. 잠시만 기다려 주세요...");
+            showLoader("오프스크린 렌더링 동기화를 통해 고정밀 PDF를 생성 중입니다...");
 
             // ──────────────────────────────────────────────────────────
-            // [1단계] Preparation: 데이터 주입 및 환경 격리
+            // [1단계] 데이터 주입
             // ──────────────────────────────────────────────────────────
-            const originalScrollY = window.scrollY; // 현재 스크롤 위치 저장
             const safeTitle = (currentPrompt || 'Edu_Navigator')
                 .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
                 .trim()
@@ -2551,21 +2550,15 @@
             renderFlowTable();
 
             // ──────────────────────────────────────────────────────────
-            // [2단계] 격리 프로토콜: 렌더링 가시화 및 좌표 초기화
+            // [2단계] 캡처 준비: 오프스크린 요소를 렌더링 레이어 내로 소환
             // ──────────────────────────────────────────────────────────
-            const mainElement = document.querySelector('main');
-            mainElement.style.display = 'none'; // 메인 UI 숨김
+            // display 속성 대신 position/left를 조정하여 브라우저가 레이아웃을 즉시 인지하도록 함
+            template.style.position = 'relative';
+            template.style.left = '0';
 
-            // 템플릿 임시 가시화 및 좌표 0으로 강제 이동 (캡처 오차 근본 해결)
-            template.style.setProperty('display', 'block', 'important');
-            window.scrollTo(0, 0);
+            // 폰트(Pretendard)와 복잡한 테이블이 뭉개지지 않도록 충분한 대기 시간 부여
+            await new Promise(r => setTimeout(r, 800));
 
-            // 표와 레이아웃이 완전히 그려질 시간을 확보 (600ms)
-            await new Promise(r => setTimeout(r, 600));
-
-            // ──────────────────────────────────────────────────────────
-            // [3단계] Capture: 고정 좌표 정밀 캡처 및 저장
-            // ──────────────────────────────────────────────────────────
             const opt = {
                 margin: [15, 15, 15, 15],
                 filename: `${safeTitle}_설계서.pdf`,
@@ -2575,7 +2568,8 @@
                     useCORS: true,
                     letterRendering: true,
                     logging: false,
-                    scrollY: 0, // scrollTo(0,0)와 연동하여 좌표 고정
+                    backgroundColor: "#ffffff", // 배경색 명시적 지정으로 백지 방지
+                    scrollY: 0,
                     windowWidth: 1000
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
@@ -2583,22 +2577,16 @@
             };
 
             try {
-                // 직접 요소를 타겟팅하여 렌더링
                 await html2pdf().set(opt).from(template).save();
-
-                // Cleanup: 격리 해제 및 환경 복구
-                template.style.setProperty('display', 'none', 'important');
-                mainElement.style.display = 'block';
-                window.scrollTo(0, originalScrollY); // 원래 스크롤 위치로 복구
-                hideLoader();
-                showToast("✅ 격리 최적화 PDF 다운로드 성공!", "success");
+                showToast("✅ 고해상도 PDF 설계서 내보내기 성공!", "success");
             } catch (err) {
                 console.error("PDF 생성 오류:", err);
-                template.style.setProperty('display', 'none', 'important');
-                mainElement.style.display = 'block';
-                window.scrollTo(0, originalScrollY);
-                hideLoader();
                 showToast("PDF 생성 중 오류가 발생했습니다.", "error");
+            } finally {
+                // [3단계] Cleanup: 템플릿을 다시 화면 밖으로 안전하게 격리
+                template.style.position = 'fixed';
+                template.style.left = '-9999px';
+                hideLoader();
             }
         }
 
@@ -2756,9 +2744,9 @@
         </div>
     </div>
 
-    <!-- PDF Export Template (Completely Isolated via display:none) -->
+    <!-- PDF Export Template (Off-screen Fixed Rendering for Layout Stability) -->
     <div id="pdf-export-template"
-        style="display: none !important; position: absolute; left: 0; top: 0; width: 190mm; background: white; z-index: -1; color: #333; padding: 0; margin: 0; box-sizing: border-box; line-height: 1.6; font-size: 14px;">
+        style="position: fixed; left: -9999px; top: 0; width: 190mm; background: #ffffff; color: #333333; z-index: -1; padding: 0; margin: 0; box-sizing: border-box; line-height: 1.6; font-size: 14px;">
 
         <!-- Header -->
         <div

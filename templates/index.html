@@ -2124,24 +2124,63 @@
         // 9. 수행과제 유형 칩 (복수 선택)
         // ═══════════════════════════════════════
         function renderTaskTypeChips() {
+            // 저장된 태그 목록이 없으면 빈 배열로 초기화 (기존의 함수 내 강제 초기화 제거)
+            if (!assessmentPlan.taskTypes) assessmentPlan.taskTypes = [];
+
             const found = new Set(['📁 포트폴리오', '✏️ 직접 입력']);
             const relevantDB = curriculumDB.filter(d => selectedSubjects.includes(d.subject));
-            relevantDB.forEach(item => { VERB_TO_TASK_MAP.forEach(({ verbs, type }) => { if (verbs.some(v => item.content.includes(v))) found.add(type); }); });
+            relevantDB.forEach(item => {
+                VERB_TO_TASK_MAP.forEach(({ verbs, type }) => {
+                    if (verbs.some(v => item.content.includes(v))) found.add(type);
+                });
+            });
+
             const container = document.getElementById('task-type-chips');
-            container.innerHTML = Array.from(found).map(type => `
-            <div class="subject-chip task-type-chip" data-type="${type}" onclick="toggleTaskType(this,'${type.replace(/'/g, "\\'")}')">${type}</div>
-        `).join('') + `<div id="custom-task-input-wrap" style="display:none;margin-top:0.7rem;width:100%">
-            <textarea id="custom-task-input" placeholder="수행과제 유형 직접 입력" style="width:100%;min-height:60px;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem;resize:vertical" oninput="assessmentPlan.customTaskType=this.value;" onblur="saveAppState();" ondblclick="openEditor(this, '평가 유형 직접 입력')"></textarea>
-        </div>`;
-            assessmentPlan.taskTypes = [];
+            const chipsHtml = Array.from(found).map(type => {
+                // 저장된 데이터에 포함되어 있다면 'active' 클래스 추가
+                const isActive = assessmentPlan.taskTypes.includes(type) ? 'active' : '';
+                return `<div class="subject-chip task-type-chip ${isActive}" data-type="${type}" onclick="toggleTaskType(this,'${type.replace(/'/g, "\\'")}')">${type}</div>`;
+            }).join('');
+
+            // '직접 입력' 활성화 여부에 따른 초기 DISPLAY 설정
+            const isCustomActive = assessmentPlan.taskTypes.includes('✏️ 직접 입력');
+            const customValue = assessmentPlan.customTaskType || '';
+
+            container.innerHTML = chipsHtml + `
+                <div id="custom-task-input-wrap" style="display:${isCustomActive ? 'block' : 'none'};margin-top:0.7rem;width:100%">
+                    <textarea id="custom-task-input" placeholder="수행과제 유형 직접 입력" 
+                        style="width:100%;min-height:60px;background:rgba(255,255,255,0.05);border:1px solid var(--primary);border-radius:8px;padding:0.5rem 0.8rem;color:white;font-size:0.85rem;resize:vertical" 
+                        oninput="assessmentPlan.customTaskType=this.value; saveAppState();" 
+                        onblur="saveAppState();" 
+                        ondblclick="openEditor(this, '평가 유형 직접 입력')">${customValue}</textarea>
+                </div>`;
+
             lucide.createIcons();
         }
+
         function toggleTaskType(el, type) {
-            if (el.classList.contains('active')) { el.classList.remove('active'); assessmentPlan.taskTypes = assessmentPlan.taskTypes.filter(t => t !== type); }
-            else { el.classList.add('active'); assessmentPlan.taskTypes.push(type); }
+            if (el.classList.contains('active')) {
+                el.classList.remove('active');
+                assessmentPlan.taskTypes = assessmentPlan.taskTypes.filter(t => t !== type);
+            } else {
+                el.classList.add('active');
+                if (!assessmentPlan.taskTypes.includes(type)) {
+                    assessmentPlan.taskTypes.push(type);
+                }
+            }
+
             const cw = document.getElementById('custom-task-input-wrap');
-            const has = assessmentPlan.taskTypes.includes('✏️ 직접 입력');
-            cw.style.display = has ? 'block' : 'none'; if (!has) assessmentPlan.customTaskType = '';
+            const isCustom = type === '✏️ 직접 입력';
+            const hasCustom = assessmentPlan.taskTypes.includes('✏️ 직접 입력');
+
+            if (cw) {
+                cw.style.display = hasCustom ? 'block' : 'none';
+                if (!hasCustom) {
+                    assessmentPlan.customTaskType = '';
+                    const ta = document.getElementById('custom-task-input');
+                    if (ta) ta.value = '';
+                }
+            }
             saveAppState();
         }
 

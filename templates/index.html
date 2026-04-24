@@ -2359,6 +2359,12 @@
         // 12. Layer 2 → Layer 3: WHERETO 수업 흐름 생성
         // ═══════════════════════════════════════
         async function generateFlowFromAssessment(engine = 'cloud') {
+            const lessonCount = lessonFlow.length;
+            if (lessonCount === 0) {
+                showToast('차시 카드를 먼저 추가해 주세요. 추가된 카드 수만큼 설계됩니다.', 'warning');
+                return;
+            }
+
             const gd = getGRASPSData();
             if (assessmentPlan.taskTypes.length === 0) { showToast('수행과제 유형을 선택해 주세요.', 'warning'); return; }
             if (!gd.goal) { showToast('GRASPS 목표를 입력해 주세요.', 'warning'); return; }
@@ -2371,11 +2377,12 @@
                 eq: ubdGoals.essentialQuestions,
                 topic: document.getElementById('prompt-input').value,
                 grasps: gd,
-                rubric: assessmentPlan.rubric
+                rubric: assessmentPlan.rubric,
+                lessonCount: lessonCount // 현재 배치된 카드 수 전달
             };
 
             const btnId = engine === 'local' ? 'flowBtnLocal' : 'flowBtnCloud';
-            showLoader('WHERETO 기반 수업 흐름을 설계 중입니다...');
+            showLoader(`${lessonCount}차시 분량의 수업을 설계 중입니다...`);
             try {
                 const aiData = await requestAIAction("COMPLEX_PLANNING", payload, engine, btnId);
                 lessonFlow = Array.isArray(aiData) ? aiData : (aiData.result || []);

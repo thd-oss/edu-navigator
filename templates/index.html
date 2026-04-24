@@ -2584,7 +2584,9 @@
             document.getElementById('pdf-grasps-a').innerText = graspsData.audience || '-';
             document.getElementById('pdf-grasps-s').innerText = graspsData.situation || '-';
             document.getElementById('pdf-grasps-p').innerText = assessmentPlan.taskTypes.join(', ') + (assessmentPlan.customTaskType ? ` (${assessmentPlan.customTaskType})` : '');
-            document.getElementById('pdf-grasps-std').innerText = (graspsData.standards || []).join(', ') || '-';
+
+            // graspsData.standards는 이미 문자열이므로 .join()을 제거하여 런타임 에러 방지
+            document.getElementById('pdf-grasps-std').innerText = graspsData.standards || '-';
 
             renderRubricTable();
             renderFlowTable();
@@ -2607,8 +2609,8 @@
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: false,
-                    backgroundColor: "#ffffff", // 배경색 명시적 지정으로 백지 방지
+                    logging: true, // 디버깅을 위해 일시적으로 로깅 활성화
+                    backgroundColor: "#ffffff",
                     scrollY: 0,
                     windowWidth: 1000
                 },
@@ -2662,8 +2664,9 @@
             if (lessonFlow.length > 0) {
                 flowBody.innerHTML = lessonFlow.map(l => {
                     const whPills = (l.whereto || []).map(tag => {
-                        const color = WHERETO_COLORS[tag] || '#64748b';
-                        return `<span style="background:${color}15; color:${color}; padding:1px 5px; border-radius:4px; font-size:0.65rem; font-weight:bold; margin-right:4px; border:1px solid ${color}30; vertical-align:middle; display:inline-block; margin-bottom:4px;">${tag}</span>`;
+                        const color = WHERETO_COLORS[tag] || '#475569'; // Fallback color 추가
+                        // 배경색과 글자색의 대비를 높여 PDF 가독성 극대화 (고대비 스타일)
+                        return `<span style="background:${color}; color:white; padding:1px 6px; border-radius:4px; font-size:0.65rem; font-weight:bold; margin-right:4px; vertical-align:middle; display:inline-block; margin-bottom:4px; border:1px solid ${color};">${tag}</span>`;
                     }).join('');
 
                     return `

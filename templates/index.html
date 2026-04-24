@@ -2584,6 +2584,7 @@
             document.getElementById('pdf-grasps-a').innerText = graspsData.audience || '-';
             document.getElementById('pdf-grasps-s').innerText = graspsData.situation || '-';
             document.getElementById('pdf-grasps-p').innerText = assessmentPlan.taskTypes.join(', ') + (assessmentPlan.customTaskType ? ` (${assessmentPlan.customTaskType})` : '');
+            document.getElementById('pdf-grasps-std').innerText = (graspsData.standards || []).join(', ') || '-';
 
             renderRubricTable();
             renderFlowTable();
@@ -2659,13 +2660,22 @@
         function renderFlowTable() {
             const flowBody = document.getElementById('pdf-flow-body');
             if (lessonFlow.length > 0) {
-                flowBody.innerHTML = lessonFlow.map(l => `
+                flowBody.innerHTML = lessonFlow.map(l => {
+                    const whPills = (l.whereto || []).map(tag => {
+                        const color = WHERETO_COLORS[tag] || '#64748b';
+                        return `<span style="background:${color}15; color:${color}; padding:1px 5px; border-radius:4px; font-size:0.65rem; font-weight:bold; margin-right:4px; border:1px solid ${color}30; vertical-align:middle; display:inline-block; margin-bottom:4px;">${tag}</span>`;
+                    }).join('');
+
+                    return `
                     <tr>
                         <td style="text-align:center; padding:15px 8px; border:1px solid #cbd5e1; font-weight:bold; color:#1e293b;">${l.id}</td>
                         <td style="padding:15px 10px; border:1px solid #cbd5e1; font-weight:bold; background:#f8fafc; color:#1e293b; word-break:keep-all;">${l.title}</td>
-                        <td style="padding:15px 10px; border:1px solid #cbd5e1; font-size:0.85rem; line-height:1.7; color:#334155; text-align:justify; word-break:keep-all; word-wrap:break-word;">${(l.desc || '').replace(/\n/g, '<br>')}</td>
-                    </tr>
-                `).join('');
+                        <td style="padding:15px 10px; border:1px solid #cbd5e1; font-size:0.85rem; line-height:1.7; color:#334155; text-align:justify; word-break:keep-all; word-wrap:break-word;">
+                            <div style="margin-bottom:8px;">${whPills}</div>
+                            ${(l.desc || '').replace(/\n/g, '<br>')}
+                        </td>
+                    </tr>`;
+                }).join('');
             } else {
                 flowBody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; border:1px solid #cbd5e1; color:#64748b;">작성된 수업 흐름이 없습니다.</td></tr>';
             }
@@ -2883,6 +2893,14 @@
                                 Product</th>
                             <td id="pdf-grasps-p"
                                 style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; font-weight: 600; word-break: keep-all;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th
+                                style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; text-align: center; font-size: 0.85rem;">
+                                Standards</th>
+                            <td id="pdf-grasps-std"
+                                style="padding: 12px; border: 1px solid #e5e7eb; color: #1f2937; font-size: 0.9rem; word-break: keep-all; text-align: justify;">
                             </td>
                         </tr>
                     </table>

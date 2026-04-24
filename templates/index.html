@@ -66,10 +66,12 @@
             gap: 0.5rem
         }
 
-        /* --- PDF Export Optimization Styles (Fundamental Redesign) --- */
+        /* --- PDF Export Optimization Styles (Custom Fix) --- */
         #pdf-export-template * {
             letter-spacing: -0.3px !important;
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
 
         #pdf-export-template td,
@@ -2519,11 +2521,12 @@
             const template = document.getElementById('pdf-export-template');
             if (!template) return;
 
-            showLoader("동기화 프로토콜을 통해 초고화질 PDF를 생성 중입니다. 잠시만 기다려 주세요...");
+            showLoader("격리 렌더링 프로토콜을 통해 고정밀 PDF를 생성 중입니다. 잠시만 기다려 주세요...");
 
             // ──────────────────────────────────────────────────────────
-            // [1단계] Preparation & 데이터 주입
+            // [1단계] Preparation: 데이터 주입 및 환경 격리
             // ──────────────────────────────────────────────────────────
+            const originalScrollY = window.scrollY; // 현재 스크롤 위치 저장
             const safeTitle = (currentPrompt || 'Edu_Navigator')
                 .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
                 .trim()
@@ -2548,17 +2551,20 @@
             renderFlowTable();
 
             // ──────────────────────────────────────────────────────────
-            // [2단계] 동기화 프로토콜: 물리적 렌더링 및 대기
+            // [2단계] 격리 프로토콜: 렌더링 가시화 및 좌표 초기화
             // ──────────────────────────────────────────────────────────
             const mainElement = document.querySelector('main');
             mainElement.style.display = 'none'; // 메인 UI 숨김
-            template.style.zIndex = '10000'; // 템플릿을 최상단으로 물리적 렌더링
 
-            // 폰트와 표 레이아웃이 완전히 계산될 시간을 넉넉히 확보 (800ms)
-            await new Promise(r => setTimeout(r, 800));
+            // 템플릿 임시 가시화 및 좌표 0으로 강제 이동 (캡처 오차 근본 해결)
+            template.style.setProperty('display', 'block', 'important');
+            window.scrollTo(0, 0);
+
+            // 표와 레이아웃이 완전히 그려질 시간을 확보 (600ms)
+            await new Promise(r => setTimeout(r, 600));
 
             // ──────────────────────────────────────────────────────────
-            // [3단계] Capture: 스크롤 좌표 역보정 및 저장
+            // [3단계] Capture: 고정 좌표 정밀 캡처 및 저장
             // ──────────────────────────────────────────────────────────
             const opt = {
                 margin: [15, 15, 15, 15],
@@ -2569,8 +2575,7 @@
                     useCORS: true,
                     letterRendering: true,
                     logging: false,
-                    // 현재 스크롤 위치만큼 위로 오프셋을 주어 (0,0) 절대 좌표 유지
-                    scrollY: -window.scrollY,
+                    scrollY: 0, // scrollTo(0,0)와 연동하여 좌표 고정
                     windowWidth: 1000
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
@@ -2578,17 +2583,20 @@
             };
 
             try {
+                // 직접 요소를 타겟팅하여 렌더링
                 await html2pdf().set(opt).from(template).save();
 
-                // Cleanup: 템플릿 숨기기 및 메인 UI 복구
-                template.style.zIndex = '-9999';
+                // Cleanup: 격리 해제 및 환경 복구
+                template.style.setProperty('display', 'none', 'important');
                 mainElement.style.display = 'block';
+                window.scrollTo(0, originalScrollY); // 원래 스크롤 위치로 복구
                 hideLoader();
-                showToast("✅ 동기화 최적화 PDF 다운로드 성공!", "success");
+                showToast("✅ 격리 최적화 PDF 다운로드 성공!", "success");
             } catch (err) {
                 console.error("PDF 생성 오류:", err);
-                template.style.zIndex = '-9999';
+                template.style.setProperty('display', 'none', 'important');
                 mainElement.style.display = 'block';
+                window.scrollTo(0, originalScrollY);
                 hideLoader();
                 showToast("PDF 생성 중 오류가 발생했습니다.", "error");
             }
@@ -2748,9 +2756,9 @@
         </div>
     </div>
 
-    <!-- PDF Export Template (Pinned to 0,0 behind UI for Layout Accuracy) -->
+    <!-- PDF Export Template (Completely Isolated via display:none) -->
     <div id="pdf-export-template"
-        style="display: block !important; position: fixed; left: 0; top: 0; width: 190mm; z-index: -9999; background: white; visibility: visible !important; color: #333; padding: 0; margin: 0; box-sizing: border-box; line-height: 1.6; font-size: 14px;">
+        style="display: none !important; position: absolute; left: 0; top: 0; width: 190mm; background: white; z-index: -1; color: #333; padding: 0; margin: 0; box-sizing: border-box; line-height: 1.6; font-size: 14px;">
 
         <!-- Header -->
         <div
